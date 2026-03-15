@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { supabase } from "@/integrations/supabase/client";
+import { leaderboardData } from "@/lib/data";
 
 interface LeaderboardEntry {
   rank: number;
@@ -17,6 +18,12 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!supabase) {
+      setData(leaderboardData);
+      setLoading(false);
+      return;
+    }
+
     const fetchLeaderboard = async () => {
       const { data: rows } = await supabase
         .from("leaderboard")
