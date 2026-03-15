@@ -18,6 +18,12 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!supabase) {
+      setData(leaderboardData);
+      setLoading(false);
+      return;
+    }
+
     const fetchLeaderboard = async () => {
       const { data: rows } = await supabase
         .from("leaderboard")

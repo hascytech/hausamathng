@@ -44,7 +44,7 @@ export default function Lesson() {
     if (currentQ + 1 >= questions.length) {
       setFinished(true);
       // Save score to database
-      if (user && topic) {
+      if (user && topic && supabase) {
         const { error } = await supabase.from("scores").insert({
           user_id: user.id,
           topic_id: topic.id,
