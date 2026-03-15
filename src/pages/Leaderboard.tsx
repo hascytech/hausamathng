@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { supabase } from "@/integrations/supabase/client";
+import { leaderboardData } from "@/lib/data";
 
 interface LeaderboardEntry {
   rank: number;
