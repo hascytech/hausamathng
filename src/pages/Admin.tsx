@@ -1,46 +1,195 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, FileQuestion, BarChart3, BookOpen, Plus, Pencil, Trash2 } from "lucide-react";
+import {
+  Users, FileQuestion, BarChart3, BookOpen, Plus, Pencil, Trash2,
+  Shield, Save, X, Loader2, UserPlus, Eye
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose,
 } from "@/components/ui/dialog";
+import {
+  Tabs, TabsContent, TabsList, TabsTrigger,
+} from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
-import { topics as allTopics } from "@/lib/data";
-
-const adminStats = [
-  { label: "Users", value: "234", icon: Users },
-  { label: "Quizzes", value: "1,456", icon: FileQuestion },
-  { label: "Accuracy", value: "76%", icon: BarChart3 },
-  { label: "Topics", value: "9", icon: BookOpen },
-];
-
-const popularTopics = [
-  { name: "Linear Equations", attempts: 342 },
-  { name: "Trigonometry", attempts: 289 },
-  { name: "Probability", attempts: 245 },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { topics as localTopicsData, type Topic } from "@/lib/data";
 
 export default function Admin() {
-  const [localTopics, setLocalTopics] = useState(allTopics);
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Topics state (local data for now)
+  const [localTopics, setLocalTopics] = useState<Topic[]>(localTopicsData);
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newTopic, setNewTopic] = useState({ title: "", description: "", videoUrl: "", classLevel: "SS1" as Topic["classLevel"] });
+
+  // Users & roles
+  const [allUsers, setAllUsers] = useState<{ user_id: string; name: string | null; email?: string }[]>([]);
+  const [adminUsers, setAdminUsers] = useState<{ user_id: string; role: string }[]>([]);
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [assignLoading, setAssignLoading] = useState(false);
+
+  // Scores
+  const [allScores, setAllScores] = useState<any[]>([]);
+  const [scoresLoading, setScoresLoading] = useState(false);
+
+  // Stats
+  const [stats, setStats] = useState({ users: 0, quizzes: 0, topics: 0 });
+
+  useEffect(() => {
+    if (!authLoading && !adminLoading && (!user || !isAdmin)) {
+      navigate("/");
+    }
+  }, [user, isAdmin, authLoading, adminLoading, navigate]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchUsers();
+      fetchAdminRoles();
+      fetchScores();
+    }
+  }, [isAdmin]);
+
+  const fetchUsers = async () => {
+    const { data } = await supabase.from("profiles").select("user_id, name");
+    if (data) {
+      setAllUsers(data);
+      setStats((s) => ({ ...s, users: data.length, topics: localTopics.length }));
+    }
+  };
+
+  const fetchAdminRoles = async () => {
+    const { data } = await supabase.from("user_roles").select("user_id, role");
+    if (data) setAdminUsers(data);
+  };
+
+  const fetchScores = async () => {
+    setScoresLoading(true);
+    const { data } = await supabase.from("scores").select("*").order("created_at", { ascending: false }).limit(100);
+    if (data) {
+      setAllScores(data);
+      setStats((s) => ({ ...s, quizzes: data.length }));
+    }
+    setScoresLoading(false);
+  };
+
+  // Topic CRUD (local only — topics are in data.ts)
+  const handleSaveNewTopic = () => {
+    if (!newTopic.title) return;
+    const id = newTopic.title.toLowerCase().replace(/\s+/g, "-");
+    const existing = localTopics.filter((t) => t.classLevel === newTopic.classLevel);
+    setLocalTopics([...localTopics, { ...newTopic, id, order: existing.length + 1 }]);
+    setNewTopic({ title: "", description: "", videoUrl: "", classLevel: "SS1" });
+    setAddOpen(false);
+    toast({ title: "Topic added" });
+  };
+
+  const handleUpdateTopic = () => {
+    if (!editingTopic) return;
+    setLocalTopics(localTopics.map((t) => (t.id === editingTopic.id ? editingTopic : t)));
+    setEditingTopic(null);
+    toast({ title: "Topic updated" });
+  };
+
+  const handleDeleteTopic = (id: string) => {
+    setLocalTopics(localTopics.filter((t) => t.id !== id));
+    toast({ title: "Topic deleted" });
+  };
+
+  // Assign admin
+  const handleAssignAdmin = async () => {
+    if (!newAdminEmail) return;
+    setAssignLoading(true);
+    // Find user by email in profiles — we need to look up via auth, but we can match by checking profiles
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .limit(1000);
+
+    if (!profile || profile.length === 0) {
+      toast({ title: "Error", description: "No users found", variant: "destructive" });
+      setAssignLoading(false);
+      return;
+    }
+
+    // We need to find the user by email — use edge function or RPC.
+    // For now, let's try a simpler approach: search by name match or inform admin
+    // Actually, we can look up auth.users via a service-level query. Since we can't do that from client,
+    // let's insert by asking admin to provide user_id or use a lookup.
+    // Workaround: use supabase admin API via edge function.
+    // For MVP: look up profiles by name match
+    toast({ title: "Looking up user...", description: `Searching for ${newAdminEmail}` });
+
+    // We'll create an edge function for this. For now, use a direct approach.
+    const { error } = await supabase.functions.invoke("assign-admin", {
+      body: { email: newAdminEmail },
+    });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Admin assigned", description: `${newAdminEmail} is now an admin` });
+      setNewAdminEmail("");
+      fetchAdminRoles();
+    }
+    setAssignLoading(false);
+  };
+
+  // Remove admin
+  const handleRemoveAdmin = async (userId: string) => {
+    if (userId === user?.id) {
+      toast({ title: "Error", description: "You cannot remove your own admin role", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Admin removed" });
+      fetchAdminRoles();
+    }
+  };
+
+  if (authLoading || adminLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
+
+  const getUserName = (userId: string) => {
+    const u = allUsers.find((p) => p.user_id === userId);
+    return u?.name || userId.slice(0, 8) + "…";
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container py-8">
         <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
-        <p className="text-muted-foreground mb-8">Manage platform and topics</p>
+        <p className="text-muted-foreground mb-8">Manage platform, topics, users & scores</p>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {adminStats.map((stat, i) => (
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          {[
+            { label: "Users", value: stats.users, icon: Users },
+            { label: "Quiz Attempts", value: stats.quizzes, icon: FileQuestion },
+            { label: "Topics", value: stats.topics, icon: BookOpen },
+          ].map((stat, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
               <Card className="text-center p-4">
                 <stat.icon className="w-6 h-6 mx-auto mb-1 text-primary" />
@@ -51,62 +200,198 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Popular topics */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-4">Popular Topics</h2>
-            {popularTopics.map((t) => (
-              <div key={t.name} className="flex justify-between py-2 border-b border-border last:border-0">
-                <span>{t.name}</span>
-                <span className="text-muted-foreground">{t.attempts} attempts</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="topics" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="topics"><BookOpen className="w-4 h-4 mr-1" /> Topics</TabsTrigger>
+            <TabsTrigger value="users"><Shield className="w-4 h-4 mr-1" /> Admins</TabsTrigger>
+            <TabsTrigger value="scores"><Eye className="w-4 h-4 mr-1" /> All Scores</TabsTrigger>
+            <TabsTrigger value="all-users"><Users className="w-4 h-4 mr-1" /> Users</TabsTrigger>
+          </TabsList>
 
-        {/* Topic management */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Manage Topics</h2>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Topic</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Topic</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
-                    <Input placeholder="Topic title" />
-                    <Textarea placeholder="Description" />
-                    <Input placeholder="Video URL" />
-                    <select className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background">
-                      <option>SS1</option>
-                      <option>SS2</option>
-                      <option>SS3</option>
-                    </select>
-                    <Button type="submit" className="w-full">Save</Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <div className="space-y-2">
-              {localTopics.map((topic) => (
-                <div key={topic.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div>
-                    <span className="font-medium">{topic.title}</span>
-                    <span className="text-xs ml-2 text-muted-foreground">{topic.classLevel}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon"><Pencil className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                  </div>
+          {/* TOPICS TAB */}
+          <TabsContent value="topics">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold">Manage Topics</h2>
+                  <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Topic</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader><DialogTitle>Add New Topic</DialogTitle></DialogHeader>
+                      <div className="space-y-4">
+                        <Input placeholder="Topic title" value={newTopic.title} onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })} />
+                        <Textarea placeholder="Description" value={newTopic.description} onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })} />
+                        <Input placeholder="Video URL" value={newTopic.videoUrl} onChange={(e) => setNewTopic({ ...newTopic, videoUrl: e.target.value })} />
+                        <select
+                          className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
+                          value={newTopic.classLevel}
+                          onChange={(e) => setNewTopic({ ...newTopic, classLevel: e.target.value as Topic["classLevel"] })}
+                        >
+                          <option value="SS1">SS1</option>
+                          <option value="SS2">SS2</option>
+                          <option value="SS3">SS3</option>
+                        </select>
+                        <Button onClick={handleSaveNewTopic} className="w-full">Save</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+
+                {(["SS1", "SS2", "SS3"] as const).map((cls) => {
+                  const clsTopics = localTopics.filter((t) => t.classLevel === cls);
+                  if (clsTopics.length === 0) return null;
+                  return (
+                    <div key={cls} className="mb-4">
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">{cls}</h3>
+                      {clsTopics.map((topic) => (
+                        <div key={topic.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                          <div>
+                            <span className="font-medium">{topic.title}</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => setEditingTopic({ ...topic })}>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader><DialogTitle>Edit Topic</DialogTitle></DialogHeader>
+                                {editingTopic && editingTopic.id === topic.id && (
+                                  <div className="space-y-4">
+                                    <Input value={editingTopic.title} onChange={(e) => setEditingTopic({ ...editingTopic, title: e.target.value })} />
+                                    <Textarea value={editingTopic.description} onChange={(e) => setEditingTopic({ ...editingTopic, description: e.target.value })} />
+                                    <Input placeholder="Video URL" value={editingTopic.videoUrl} onChange={(e) => setEditingTopic({ ...editingTopic, videoUrl: e.target.value })} />
+                                    <select
+                                      className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
+                                      value={editingTopic.classLevel}
+                                      onChange={(e) => setEditingTopic({ ...editingTopic, classLevel: e.target.value as Topic["classLevel"] })}
+                                    >
+                                      <option value="SS1">SS1</option>
+                                      <option value="SS2">SS2</option>
+                                      <option value="SS3">SS3</option>
+                                    </select>
+                                    <DialogClose asChild>
+                                      <Button onClick={handleUpdateTopic} className="w-full"><Save className="w-4 h-4 mr-1" /> Save Changes</Button>
+                                    </DialogClose>
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteTopic(topic.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ADMINS TAB */}
+          <TabsContent value="users">
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-lg font-bold mb-4">Admin Management</h2>
+                <div className="flex gap-2 mb-6">
+                  <Input
+                    placeholder="Enter email to assign admin"
+                    value={newAdminEmail}
+                    onChange={(e) => setNewAdminEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button onClick={handleAssignAdmin} disabled={assignLoading}>
+                    {assignLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4 mr-1" />}
+                    Assign
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {adminUsers.map((a) => (
+                    <div key={a.user_id} className="flex items-center justify-between py-2 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-primary" />
+                        <span className="font-medium">{getUserName(a.user_id)}</span>
+                        <span className="text-xs text-muted-foreground">{a.role}</span>
+                      </div>
+                      {a.user_id !== user?.id && (
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleRemoveAdmin(a.user_id)}>
+                          <Trash2 className="w-4 h-4 mr-1" /> Remove
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ALL SCORES TAB */}
+          <TabsContent value="scores">
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-lg font-bold mb-4">All Student Scores</h2>
+                {scoresLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : allScores.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No scores recorded yet</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-2">Student</th>
+                          <th className="text-left py-2">Topic</th>
+                          <th className="text-right py-2">Score</th>
+                          <th className="text-right py-2">Total</th>
+                          <th className="text-right py-2">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allScores.map((s) => (
+                          <tr key={s.id} className="border-b border-border last:border-0">
+                            <td className="py-2">{getUserName(s.user_id)}</td>
+                            <td className="py-2">{s.topic_id}</td>
+                            <td className="py-2 text-right">{s.score}</td>
+                            <td className="py-2 text-right">{s.total_questions}</td>
+                            <td className="py-2 text-right text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ALL USERS TAB */}
+          <TabsContent value="all-users">
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-lg font-bold mb-4">All Users ({allUsers.length})</h2>
+                <div className="space-y-2">
+                  {allUsers.map((u) => {
+                    const isAdminUser = adminUsers.some((a) => a.user_id === u.user_id);
+                    return (
+                      <div key={u.user_id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{u.name || "Unnamed"}</span>
+                          {isAdminUser && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">Admin</span>}
+                        </div>
+                        <span className="text-xs text-muted-foreground">{u.user_id.slice(0, 8)}…</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

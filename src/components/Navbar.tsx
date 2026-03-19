@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, Trophy, Info, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Home, BookOpen, Trophy, Info, LogIn, LogOut, Menu, X, Shield } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home },
@@ -15,6 +16,7 @@ export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
 
   return (
     <>
@@ -40,6 +42,19 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === "/admin"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            )}
             {user ? (
               <Button variant="ghost" size="sm" onClick={signOut}>
                 <LogOut className="w-4 h-4 mr-1" />
@@ -86,6 +101,18 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === "/admin" ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            )}
             {user ? (
               <button
                 onClick={() => { signOut(); setMobileOpen(false); }}
