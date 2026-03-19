@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, Trophy, Info, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Home, BookOpen, Trophy, Info, LogIn, LogOut, Menu, X, Shield } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home },
