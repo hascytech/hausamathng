@@ -8,8 +8,6 @@ import { classLevels, getTopicsByClass } from "@/lib/data";
 
 export default function Classes() {
   const { classId } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
 
   if (classId) {
     const cls = classLevels.find((c) => c.id === classId);

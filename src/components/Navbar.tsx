@@ -87,32 +87,31 @@ export default function Navbar() {
               </Link>
             ))}
             {user ? (
+              <button
+                onClick={() => { signOut(); setMobileOpen(false); }}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground w-full"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            ) : (
               <>
                 <Link
-                  to="/classes"
+                  to="/login"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground"
                 >
-                  <BookOpen className="w-4 h-4" />
-                  Classes
+                  <LogIn className="w-4 h-4" />
+                  Login
                 </Link>
-                <button
-                  onClick={() => { signOut(); setMobileOpen(false); }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground w-full"
+                <Link
+                  to="/login?mode=signup"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-primary"
                 >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
+                  Sign Up
+                </Link>
               </>
-            ) : (
-              <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-primary"
-              >
-                <LogIn className="w-4 h-4" />
-                Login
-              </Link>
             )}
           </div>
         )}
