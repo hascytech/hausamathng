@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { classLevels, getTopicsByClass } from "@/lib/data";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function Classes() {
   const { classId } = useParams();
