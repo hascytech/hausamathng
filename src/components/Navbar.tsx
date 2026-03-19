@@ -42,6 +42,19 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === "/admin"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            )}
             {user ? (
               <Button variant="ghost" size="sm" onClick={signOut}>
                 <LogOut className="w-4 h-4 mr-1" />
