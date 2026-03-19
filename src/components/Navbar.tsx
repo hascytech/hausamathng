@@ -101,6 +101,18 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === "/admin" ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            )}
             {user ? (
               <button
                 onClick={() => { signOut(); setMobileOpen(false); }}
