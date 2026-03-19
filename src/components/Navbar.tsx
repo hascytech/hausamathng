@@ -41,30 +41,24 @@ export default function Navbar() {
               </Link>
             ))}
             {user ? (
-              <>
-                <Link
-                  to="/classes"
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.startsWith("/classes")
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <BookOpen className="w-4 h-4" />
-                  Classes
-                </Link>
-                <Button variant="ghost" size="sm" onClick={signOut}>
-                  <LogOut className="w-4 h-4 mr-1" />
-                  Logout
-                </Button>
-              </>
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                <LogOut className="w-4 h-4 mr-1" />
+                Logout
+              </Button>
             ) : (
-              <Link to="/login">
-                <Button variant="default" size="sm">
-                  <LogIn className="w-4 h-4 mr-1" />
-                  Login
-                </Button>
-              </Link>
+              <div className="flex items-center gap-1">
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    <LogIn className="w-4 h-4 mr-1" />
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/login?mode=signup">
+                  <Button variant="default" size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
 
