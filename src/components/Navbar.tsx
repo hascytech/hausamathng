@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home },
+  { to: "/classes", label: "Classes", icon: BookOpen },
   { to: "/about", label: "About", icon: Info },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
@@ -40,30 +41,24 @@ export default function Navbar() {
               </Link>
             ))}
             {user ? (
-              <>
-                <Link
-                  to="/classes"
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.startsWith("/classes")
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <BookOpen className="w-4 h-4" />
-                  Classes
-                </Link>
-                <Button variant="ghost" size="sm" onClick={signOut}>
-                  <LogOut className="w-4 h-4 mr-1" />
-                  Logout
-                </Button>
-              </>
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                <LogOut className="w-4 h-4 mr-1" />
+                Logout
+              </Button>
             ) : (
-              <Link to="/login">
-                <Button variant="default" size="sm">
-                  <LogIn className="w-4 h-4 mr-1" />
-                  Login
-                </Button>
-              </Link>
+              <div className="flex items-center gap-1">
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    <LogIn className="w-4 h-4 mr-1" />
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/login?mode=signup">
+                  <Button variant="default" size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
 
@@ -92,32 +87,31 @@ export default function Navbar() {
               </Link>
             ))}
             {user ? (
+              <button
+                onClick={() => { signOut(); setMobileOpen(false); }}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground w-full"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            ) : (
               <>
                 <Link
-                  to="/classes"
+                  to="/login"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground"
                 >
-                  <BookOpen className="w-4 h-4" />
-                  Classes
+                  <LogIn className="w-4 h-4" />
+                  Login
                 </Link>
-                <button
-                  onClick={() => { signOut(); setMobileOpen(false); }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground w-full"
+                <Link
+                  to="/login?mode=signup"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-primary"
                 >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
+                  Sign Up
+                </Link>
               </>
-            ) : (
-              <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-primary"
-              >
-                <LogIn className="w-4 h-4" />
-                Login
-              </Link>
             )}
           </div>
         )}

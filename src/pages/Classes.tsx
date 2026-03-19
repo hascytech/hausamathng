@@ -5,25 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { classLevels, getTopicsByClass } from "@/lib/data";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function Classes() {
   const { classId } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const handleClassClick = (id: string, e: React.MouseEvent) => {
-    if (!user) {
-      e.preventDefault();
-      navigate("/login");
-    }
-  };
 
   if (classId) {
-    if (!user) {
-      navigate("/login");
-      return null;
-    }
     const cls = classLevels.find((c) => c.id === classId);
     const classTopics = getTopicsByClass(classId);
 
@@ -70,7 +56,7 @@ export default function Classes() {
 
         <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
           {classLevels.map((cls, i) => (
-            <Link key={cls.id} to={`/classes/${cls.id}`} onClick={(e) => handleClassClick(cls.id, e)}>
+            <Link key={cls.id} to={`/classes/${cls.id}`}>
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                 <Card className="hover:shadow-lg transition-shadow p-8 text-center">
                   <BookOpen className="w-12 h-12 mx-auto mb-4 text-primary" />
