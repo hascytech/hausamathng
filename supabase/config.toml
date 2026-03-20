@@ -1,1 +1,7 @@
 project_id = "mkfacyrixfwjrojyenhu"
+
+[functions.generate-quiz]
+verify_jwt = false
+
+[functions.assign-admin]
+verify_jwt = false

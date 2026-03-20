@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Play } from "lucide-react";
+import { ArrowLeft, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
 import QuizCard from "@/components/QuizCard";
-import { getTopicById, getSampleQuestions } from "@/lib/data";
+import { getTopicById } from "@/lib/data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import type { QuizQuestion } from "@/lib/data";
 
 export default function Lesson() {
   const { topicId } = useParams();
@@ -19,6 +20,8 @@ export default function Lesson() {
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -34,7 +37,73 @@ export default function Lesson() {
     );
   }
 
-  const questions = getSampleQuestions(topic.id);
+  const fetchQuestions = async () => {
+    setLoading(true);
+    try {
+      // Try to get existing questions from DB
+      const { data, error } = await supabase
+        .from("quiz_questions")
+        .select("*")
+        .eq("topic_id", topic.id);
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        // Generate questions via edge function
+        const { data: genData, error: genError } = await supabase.functions.invoke("generate-quiz", {
+          body: { topicId: topic.id, topicTitle: topic.title, classLevel: topic.classLevel },
+        });
+
+        if (genError) throw genError;
+
+        if (genData?.error) {
+          toast({ title: "Error generating quiz", description: genData.error, variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+
+        // Fetch the newly generated questions
+        const { data: newData, error: newError } = await supabase
+          .from("quiz_questions")
+          .select("*")
+          .eq("topic_id", topic.id);
+
+        if (newError) throw newError;
+        if (newData) {
+          pickRandomQuestions(newData);
+        }
+      } else {
+        pickRandomQuestions(data);
+      }
+    } catch (e: any) {
+      console.error("Error fetching questions:", e);
+      toast({ title: "Error loading quiz", description: e.message || "Please try again", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const pickRandomQuestions = (allQuestions: any[]) => {
+    // Shuffle and pick 5, trying to get mixed difficulty
+    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, 5);
+
+    const mapped: QuizQuestion[] = selected.map((q, i) => ({
+      id: q.id,
+      question: q.question,
+      options: q.options as { label: string; value: string }[],
+      correctAnswer: q.correct_answer,
+      stepByStep: q.step_by_step as string[],
+      explanation: q.explanation,
+    }));
+
+    setQuestions(mapped);
+  };
+
+  const handleStartQuiz = async () => {
+    await fetchQuestions();
+    setQuizStarted(true);
+  };
 
   const handleAnswer = (isCorrect: boolean) => {
     if (isCorrect) setScore((s) => s + 10);
@@ -43,7 +112,6 @@ export default function Lesson() {
   const handleNext = async () => {
     if (currentQ + 1 >= questions.length) {
       setFinished(true);
-      // Save score to database
       if (user && topic && supabase) {
         const { error } = await supabase.from("scores").insert({
           user_id: user.id,
@@ -68,35 +136,43 @@ export default function Lesson() {
           <ArrowLeft className="w-4 h-4" /> Back to {topic.classLevel}
         </Link>
 
-        <VideoPlayer url={topic.videoUrl} title={topic.title} />
-
-        <div className="mt-4 mb-2">
+        <div className="mb-2">
           <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded">{topic.classLevel}</span>
         </div>
         <h1 className="text-2xl font-bold mb-4">{topic.title}</h1>
 
+        <VideoPlayer url={topic.videoUrl} title={topic.title} />
+
         {!quizStarted ? (
-          <>
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-muted-foreground mb-4">{topic.description}</p>
-                <Button
-                  onClick={() => setQuizStarted(true)}
-                  size="lg"
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 text-lg font-semibold"
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  Start Practice
-                </Button>
-              </CardContent>
-            </Card>
-          </>
+          <Card className="mt-6">
+            <CardContent className="p-6">
+              <p className="text-muted-foreground mb-4">{topic.description}</p>
+              <Button
+                onClick={handleStartQuiz}
+                disabled={loading}
+                size="lg"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 text-lg font-semibold"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Generating Quiz...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5 mr-2" />
+                    Start Quiz
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
         ) : finished ? (
-          <Card>
+          <Card className="mt-6">
             <CardContent className="p-8 text-center space-y-4">
               <div className="text-5xl">🎉</div>
               <h2 className="text-2xl font-bold">Well done!</h2>
-              <p className="text-muted-foreground">You've completed the practice for {topic.title}</p>
+              <p className="text-muted-foreground">You've completed the quiz for {topic.title}</p>
               <div className="text-3xl font-bold text-primary">
                 {score} / {questions.length * 10} points
               </div>
@@ -105,6 +181,7 @@ export default function Lesson() {
                   setCurrentQ(0);
                   setScore(0);
                   setFinished(false);
+                  setQuizStarted(false);
                 }} className="bg-primary text-primary-foreground">
                   Try Again
                 </Button>
@@ -114,14 +191,23 @@ export default function Lesson() {
               </div>
             </CardContent>
           </Card>
+        ) : questions.length > 0 ? (
+          <div className="mt-6">
+            <QuizCard
+              question={questions[currentQ]}
+              questionNumber={currentQ + 1}
+              totalQuestions={questions.length}
+              onAnswer={handleAnswer}
+              onNext={handleNext}
+            />
+          </div>
         ) : (
-          <QuizCard
-            question={questions[currentQ]}
-            questionNumber={currentQ + 1}
-            totalQuestions={questions.length}
-            onAnswer={handleAnswer}
-            onNext={handleNext}
-          />
+          <Card className="mt-6">
+            <CardContent className="p-8 text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+              <p className="text-muted-foreground">Loading quiz questions...</p>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
