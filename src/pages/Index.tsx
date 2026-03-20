@@ -1,11 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Play, Users, Video, Brain, Star, GraduationCap, Globe } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import { classLevels } from "@/lib/data";
+import { useState, useEffect } from "react";
+import hm1 from "@/assets/hm_1.png";
+import hm2 from "@/assets/hm_2.png";
+import hm3 from "@/assets/hm_3.png";
+import hm4 from "@/assets/hm_4.png";
+
+const heroImages = [hm1, hm2, hm3, hm4];
 
 const stats = [
   { value: "500+", label: "Students Enrolled", icon: Users },
