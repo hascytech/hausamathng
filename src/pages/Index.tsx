@@ -68,24 +68,49 @@ export default function Index() {
       <Navbar />
 
       {/* Hero */}
-      <section className="container py-16 md:py-24">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">Hausa Math</h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8">Learn Mathematics in Hausa. Watch. Practice. Master.</p>
-          <Link to={user ? "/classes" : "/login"}>
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 h-14">
-              <Play className="w-5 h-5 mr-2" />
-              Start Learning
-            </Button>
-          </Link>
-          <div className="flex justify-center gap-2 mt-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="w-12 h-12 rounded-full bg-secondary border-2 border-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                S{i}
-              </div>
-            ))}
-          </div>
-        </motion.div>
+      <section className="container py-12 md:py-20">
+        <div className="grid md:grid-cols-2 gap-10 items-center">
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground leading-tight">
+              Learn Math<br />
+              <span className="text-primary">in Hausa</span>
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground mb-8">Watch. Practice. Master. Prepare for WAEC & NECO with video lessons entirely in Hausa.</p>
+            <Link to={user ? "/classes" : "/login"}>
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 h-14">
+                <Play className="w-5 h-5 mr-2" />
+                Start Learning
+              </Button>
+            </Link>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="relative w-full aspect-square max-w-md mx-auto">
+            <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border-4 border-primary/20">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentImage}
+                  src={heroImages[currentImage]}
+                  alt="Hausa students learning mathematics"
+                  className="w-full h-full object-cover"
+                  initial={{ opacity: 0, scale: 1.05 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.6 }}
+                />
+              </AnimatePresence>
+            </div>
+            {/* Image indicators */}
+            <div className="flex justify-center gap-2 mt-4">
+              {heroImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentImage(i)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${i === currentImage ? 'bg-primary w-6' : 'bg-muted-foreground/30'}`}
+                />
+              ))}
+            </div>
+          </motion.div>
+        </div>
       </section>
 
       {/* Statistics */}
