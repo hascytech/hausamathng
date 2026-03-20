@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { BookOpen, Play, Users, Video, Brain, Star, GraduationCap, Globe } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import { classLevels } from "@/lib/data";
-import { useState, useEffect } from "react";
+
 import hm1 from "@/assets/hm_1.png";
 import hm2 from "@/assets/hm_2.png";
 import hm3 from "@/assets/hm_3.png";
@@ -47,14 +47,6 @@ export default function Index() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [currentImage, setCurrentImage] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % heroImages.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleClassClick = (classId: string, e: React.MouseEvent) => {
     if (!user) {
@@ -69,47 +61,31 @@ export default function Index() {
 
       {/* Hero */}
       <section className="container py-12 md:py-20">
-        <div className="grid md:grid-cols-2 gap-10 items-center">
-          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground leading-tight">
-              Learn Math<br />
-              <span className="text-primary">in Hausa</span>
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8">Watch. Practice. Master. Prepare for WAEC & NECO with video lessons entirely in Hausa.</p>
-            <Link to={user ? "/classes" : "/login"}>
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 h-14">
-                <Play className="w-5 h-5 mr-2" />
-                Start Learning
-              </Button>
-            </Link>
-          </motion.div>
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground leading-tight">
+            Learn Math <span className="text-primary">in Hausa</span>
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground mb-8">Watch. Practice. Master. Prepare for WAEC & NECO with video lessons entirely in Hausa.</p>
+          <Link to={user ? "/classes" : "/login"}>
+            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 h-14">
+              <Play className="w-5 h-5 mr-2" />
+              Start Learning
+            </Button>
+          </Link>
+        </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="relative w-full aspect-square max-w-md mx-auto">
-            <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border-4 border-primary/20">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentImage}
-                  src={heroImages[currentImage]}
-                  alt="Hausa students learning mathematics"
-                  className="w-full h-full object-cover"
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.6 }}
-                />
-              </AnimatePresence>
-            </div>
-            {/* Image indicators */}
-            <div className="flex justify-center gap-2 mt-4">
-              {heroImages.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentImage(i)}
-                  className={`w-2.5 h-2.5 rounded-full transition-all ${i === currentImage ? 'bg-primary w-6' : 'bg-muted-foreground/30'}`}
-                />
-              ))}
-            </div>
-          </motion.div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+          {heroImages.map((img, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
+              className="rounded-xl overflow-hidden shadow-lg border-2 border-primary/10 aspect-square"
+            >
+              <img src={img} alt={`Hausa students learning mathematics ${i + 1}`} className="w-full h-full object-cover" />
+            </motion.div>
+          ))}
         </div>
       </section>
 
