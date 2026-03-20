@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import { classLevels } from "@/lib/data";
-import { useState, useEffect } from "react";
+
 import hm1 from "@/assets/hm_1.png";
 import hm2 from "@/assets/hm_2.png";
 import hm3 from "@/assets/hm_3.png";
