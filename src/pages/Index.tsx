@@ -47,6 +47,15 @@ export default function Index() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [currentImage, setCurrentImage] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleClassClick = (classId: string, e: React.MouseEvent) => {
     if (!user) {
       e.preventDefault();
