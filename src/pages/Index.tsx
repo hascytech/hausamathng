@@ -39,9 +39,6 @@ const testimonials = [
 }];
 
 
-const partners = [
-"WAEC", "NECO", "Ministry of Education", "UNICEF", "UNESCO"];
-
 
 export default function Index() {
   const { user } = useAuth();
