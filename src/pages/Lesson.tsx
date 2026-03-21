@@ -144,8 +144,13 @@ export default function Lesson() {
 
         {!quizStarted ? (
           <Card className="mt-6">
-            <CardContent className="p-6">
-              <p className="text-muted-foreground mb-4">{topic.description}</p>
+            <CardContent className="p-6 text-center space-y-4">
+              <p className="text-lg font-medium text-foreground">
+                🎯 Ready to test what you've learned?
+              </p>
+              <p className="text-muted-foreground">
+                Take a quick quiz to reinforce your understanding and earn points on the leaderboard!
+              </p>
               <Button
                 onClick={handleStartQuiz}
                 disabled={loading}
