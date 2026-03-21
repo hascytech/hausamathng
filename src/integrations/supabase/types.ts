@@ -104,6 +104,39 @@ export type Database = {
         }
         Relationships: []
       }
+      topics: {
+        Row: {
+          class_level: string
+          created_at: string
+          description: string
+          id: string
+          order: number
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          class_level: string
+          created_at?: string
+          description?: string
+          id: string
+          order?: number
+          title: string
+          updated_at?: string
+          video_url?: string
+        }
+        Update: {
+          class_level?: string
+          created_at?: string
+          description?: string
+          id?: string
+          order?: number
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

@@ -20,7 +20,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { topics as localTopicsData, type Topic } from "@/lib/data";
+import { useTopics, type DbTopic } from "@/hooks/useTopics";
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
@@ -28,14 +28,15 @@ export default function Admin() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Topics state (local data for now)
-  const [localTopics, setLocalTopics] = useState<Topic[]>(localTopicsData);
-  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  const { topics: dbTopics, loading: topicsLoading, refetch: refetchTopics } = useTopics();
+
+  const [editingTopic, setEditingTopic] = useState<DbTopic | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [newTopic, setNewTopic] = useState({ title: "", description: "", videoUrl: "", classLevel: "SS1" as Topic["classLevel"] });
+  const [newTopic, setNewTopic] = useState({ title: "", description: "", video_url: "", class_level: "SS1" });
+  const [saving, setSaving] = useState(false);
 
   // Users & roles
-  const [allUsers, setAllUsers] = useState<{ user_id: string; name: string | null; email?: string }[]>([]);
+  const [allUsers, setAllUsers] = useState<{ user_id: string; name: string | null }[]>([]);
   const [adminUsers, setAdminUsers] = useState<{ user_id: string; role: string }[]>([]);
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [assignLoading, setAssignLoading] = useState(false);
@@ -61,11 +62,15 @@ export default function Admin() {
     }
   }, [isAdmin]);
 
+  useEffect(() => {
+    setStats((s) => ({ ...s, topics: dbTopics.length }));
+  }, [dbTopics]);
+
   const fetchUsers = async () => {
     const { data } = await supabase.from("profiles").select("user_id, name");
     if (data) {
       setAllUsers(data);
-      setStats((s) => ({ ...s, users: data.length, topics: localTopics.length }));
+      setStats((s) => ({ ...s, users: data.length }));
     }
   };
 
@@ -84,58 +89,67 @@ export default function Admin() {
     setScoresLoading(false);
   };
 
-  // Topic CRUD (local only — topics are in data.ts)
-  const handleSaveNewTopic = () => {
+  // Topic CRUD — database
+  const handleSaveNewTopic = async () => {
     if (!newTopic.title) return;
+    setSaving(true);
     const id = newTopic.title.toLowerCase().replace(/\s+/g, "-");
-    const existing = localTopics.filter((t) => t.classLevel === newTopic.classLevel);
-    setLocalTopics([...localTopics, { ...newTopic, id, order: existing.length + 1 }]);
-    setNewTopic({ title: "", description: "", videoUrl: "", classLevel: "SS1" });
-    setAddOpen(false);
-    toast({ title: "Topic added" });
+    const existing = dbTopics.filter((t) => t.class_level === newTopic.class_level);
+    const { error } = await supabase.from("topics").insert({
+      id,
+      class_level: newTopic.class_level,
+      title: newTopic.title,
+      description: newTopic.description,
+      video_url: newTopic.video_url,
+      order: existing.length + 1,
+    });
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Topic added" });
+      setNewTopic({ title: "", description: "", video_url: "", class_level: "SS1" });
+      setAddOpen(false);
+      refetchTopics();
+    }
   };
 
-  const handleUpdateTopic = () => {
+  const handleUpdateTopic = async () => {
     if (!editingTopic) return;
-    setLocalTopics(localTopics.map((t) => (t.id === editingTopic.id ? editingTopic : t)));
-    setEditingTopic(null);
-    toast({ title: "Topic updated" });
+    setSaving(true);
+    const { error } = await supabase.from("topics").update({
+      title: editingTopic.title,
+      description: editingTopic.description,
+      video_url: editingTopic.video_url,
+      class_level: editingTopic.class_level,
+    }).eq("id", editingTopic.id);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Topic updated" });
+      setEditingTopic(null);
+      refetchTopics();
+    }
   };
 
-  const handleDeleteTopic = (id: string) => {
-    setLocalTopics(localTopics.filter((t) => t.id !== id));
-    toast({ title: "Topic deleted" });
+  const handleDeleteTopic = async (id: string) => {
+    const { error } = await supabase.from("topics").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Topic deleted" });
+      refetchTopics();
+    }
   };
 
   // Assign admin
   const handleAssignAdmin = async () => {
     if (!newAdminEmail) return;
     setAssignLoading(true);
-    // Find user by email in profiles — we need to look up via auth, but we can match by checking profiles
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_id")
-      .limit(1000);
-
-    if (!profile || profile.length === 0) {
-      toast({ title: "Error", description: "No users found", variant: "destructive" });
-      setAssignLoading(false);
-      return;
-    }
-
-    // We need to find the user by email — use edge function or RPC.
-    // For now, let's try a simpler approach: search by name match or inform admin
-    // Actually, we can look up auth.users via a service-level query. Since we can't do that from client,
-    // let's insert by asking admin to provide user_id or use a lookup.
-    // Workaround: use supabase admin API via edge function.
-    // For MVP: look up profiles by name match
-    toast({ title: "Looking up user...", description: `Searching for ${newAdminEmail}` });
-
-    // We'll create an edge function for this. For now, use a direct approach.
     const { error } = await supabase.functions.invoke("assign-admin", {
       body: { email: newAdminEmail },
     });
-
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -223,72 +237,83 @@ export default function Admin() {
                       <div className="space-y-4">
                         <Input placeholder="Topic title" value={newTopic.title} onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })} />
                         <Textarea placeholder="Description" value={newTopic.description} onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })} />
-                        <Input placeholder="Video URL" value={newTopic.videoUrl} onChange={(e) => setNewTopic({ ...newTopic, videoUrl: e.target.value })} />
+                        <Input placeholder="Video URL" value={newTopic.video_url} onChange={(e) => setNewTopic({ ...newTopic, video_url: e.target.value })} />
                         <select
                           className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
-                          value={newTopic.classLevel}
-                          onChange={(e) => setNewTopic({ ...newTopic, classLevel: e.target.value as Topic["classLevel"] })}
+                          value={newTopic.class_level}
+                          onChange={(e) => setNewTopic({ ...newTopic, class_level: e.target.value })}
                         >
                           <option value="SS1">SS1</option>
                           <option value="SS2">SS2</option>
                           <option value="SS3">SS3</option>
                         </select>
-                        <Button onClick={handleSaveNewTopic} className="w-full">Save</Button>
+                        <Button onClick={handleSaveNewTopic} disabled={saving} className="w-full">
+                          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                          Save
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
                 </div>
 
-                {(["SS1", "SS2", "SS3"] as const).map((cls) => {
-                  const clsTopics = localTopics.filter((t) => t.classLevel === cls);
-                  if (clsTopics.length === 0) return null;
-                  return (
-                    <div key={cls} className="mb-4">
-                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">{cls}</h3>
-                      {clsTopics.map((topic) => (
-                        <div key={topic.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                          <div>
-                            <span className="font-medium">{topic.title}</span>
+                {topicsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                ) : (
+                  (["SS1", "SS2", "SS3"] as const).map((cls) => {
+                    const clsTopics = dbTopics.filter((t) => t.class_level === cls);
+                    if (clsTopics.length === 0) return null;
+                    return (
+                      <div key={cls} className="mb-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground mb-2">{cls}</h3>
+                        {clsTopics.map((topic) => (
+                          <div key={topic.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                            <div>
+                              <span className="font-medium">{topic.title}</span>
+                              <span className="text-xs text-muted-foreground ml-2 truncate max-w-[200px] inline-block align-middle">{topic.video_url}</span>
+                            </div>
+                            <div className="flex gap-1">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" onClick={() => setEditingTopic({ ...topic })}>
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader><DialogTitle>Edit Topic</DialogTitle></DialogHeader>
+                                  {editingTopic && editingTopic.id === topic.id && (
+                                    <div className="space-y-4">
+                                      <Input value={editingTopic.title} onChange={(e) => setEditingTopic({ ...editingTopic, title: e.target.value })} />
+                                      <Textarea value={editingTopic.description} onChange={(e) => setEditingTopic({ ...editingTopic, description: e.target.value })} />
+                                      <Input placeholder="Video URL" value={editingTopic.video_url} onChange={(e) => setEditingTopic({ ...editingTopic, video_url: e.target.value })} />
+                                      <select
+                                        className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
+                                        value={editingTopic.class_level}
+                                        onChange={(e) => setEditingTopic({ ...editingTopic, class_level: e.target.value })}
+                                      >
+                                        <option value="SS1">SS1</option>
+                                        <option value="SS2">SS2</option>
+                                        <option value="SS3">SS3</option>
+                                      </select>
+                                      <DialogClose asChild>
+                                        <Button onClick={handleUpdateTopic} disabled={saving} className="w-full">
+                                          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                                          Save Changes
+                                        </Button>
+                                      </DialogClose>
+                                    </div>
+                                  )}
+                                </DialogContent>
+                              </Dialog>
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteTopic(topic.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex gap-1">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => setEditingTopic({ ...topic })}>
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader><DialogTitle>Edit Topic</DialogTitle></DialogHeader>
-                                {editingTopic && editingTopic.id === topic.id && (
-                                  <div className="space-y-4">
-                                    <Input value={editingTopic.title} onChange={(e) => setEditingTopic({ ...editingTopic, title: e.target.value })} />
-                                    <Textarea value={editingTopic.description} onChange={(e) => setEditingTopic({ ...editingTopic, description: e.target.value })} />
-                                    <Input placeholder="Video URL" value={editingTopic.videoUrl} onChange={(e) => setEditingTopic({ ...editingTopic, videoUrl: e.target.value })} />
-                                    <select
-                                      className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
-                                      value={editingTopic.classLevel}
-                                      onChange={(e) => setEditingTopic({ ...editingTopic, classLevel: e.target.value as Topic["classLevel"] })}
-                                    >
-                                      <option value="SS1">SS1</option>
-                                      <option value="SS2">SS2</option>
-                                      <option value="SS3">SS3</option>
-                                    </select>
-                                    <DialogClose asChild>
-                                      <Button onClick={handleUpdateTopic} className="w-full"><Save className="w-4 h-4 mr-1" /> Save Changes</Button>
-                                    </DialogClose>
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
-                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteTopic(topic.id)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
+                        ))}
+                      </div>
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -383,7 +408,6 @@ export default function Admin() {
                           <span className="font-medium">{u.name || "Unnamed"}</span>
                           {isAdminUser && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">Admin</span>}
                         </div>
-                        <span className="text-xs text-muted-foreground">{u.user_id.slice(0, 8)}…</span>
                       </div>
                     );
                   })}

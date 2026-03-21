@@ -1,50 +1,17 @@
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, Play, ArrowLeft } from "lucide-react";
+import { BookOpen, Play, ArrowLeft, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
-import { classLevels, getTopicsByClass } from "@/lib/data";
+import { classLevels } from "@/lib/data";
+import { useTopics } from "@/hooks/useTopics";
 
 export default function Classes() {
   const { classId } = useParams();
 
   if (classId) {
-    const cls = classLevels.find((c) => c.id === classId);
-    const classTopics = getTopicsByClass(classId);
-
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container py-8">
-          <Link to="/classes" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
-            <ArrowLeft className="w-4 h-4" /> Back to Classes
-          </Link>
-          <h1 className="text-3xl font-bold mb-2">{cls?.label || classId}</h1>
-          <p className="text-muted-foreground mb-8">{cls?.description} — {classTopics.length} topics</p>
-
-          <div className="grid gap-4">
-            {classTopics.map((topic, i) => (
-              <motion.div key={topic.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-                <Link to={`/lesson/${topic.id}`}>
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6 flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-lg">{topic.title}</h3>
-                        <p className="text-sm text-muted-foreground">{topic.description}</p>
-                      </div>
-                      <Button variant="ghost" size="sm" className="text-primary shrink-0">
-                        <Play className="w-4 h-4 mr-1" /> Open →
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ClassDetail classId={classId} />;
   }
 
   return (
@@ -62,12 +29,54 @@ export default function Classes() {
                   <BookOpen className="w-12 h-12 mx-auto mb-4 text-primary" />
                   <h2 className="text-2xl font-bold mb-1">{cls.label}</h2>
                   <p className="text-muted-foreground text-sm mb-3">{cls.description}</p>
-                  <span className="text-primary font-medium">{cls.topicCount} topics →</span>
+                  <span className="text-primary font-medium">View topics →</span>
                 </Card>
               </motion.div>
             </Link>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ClassDetail({ classId }: { classId: string }) {
+  const cls = classLevels.find((c) => c.id === classId);
+  const { topics, loading } = useTopics(classId);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container py-8">
+        <Link to="/classes" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+          <ArrowLeft className="w-4 h-4" /> Back to Classes
+        </Link>
+        <h1 className="text-3xl font-bold mb-2">{cls?.label || classId}</h1>
+        <p className="text-muted-foreground mb-8">{cls?.description} — {topics.length} topics</p>
+
+        {loading ? (
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+        ) : (
+          <div className="grid gap-4">
+            {topics.map((topic, i) => (
+              <motion.div key={topic.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+                <Link to={`/lesson/${topic.id}`}>
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg">{topic.title}</h3>
+                        <p className="text-sm text-muted-foreground">{topic.description}</p>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-primary shrink-0">
+                        <Play className="w-4 h-4 mr-1" /> Open →
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
