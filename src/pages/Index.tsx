@@ -15,33 +15,33 @@ import hm4 from "@/assets/hm_4.png";
 const heroImages = [hm1, hm2, hm3, hm4];
 
 const stats = [
-  { value: "500+", label: "Students Enrolled", icon: Users },
-  { value: "50+", label: "Video Lessons", icon: Video },
-  { value: "92%", label: "Pass Rate", icon: Brain },
-  { value: "4.8★", label: "Student Rating", icon: Star },
-];
+{ value: "500+", label: "Students Enrolled", icon: Users },
+{ value: "50+", label: "Video Lessons", icon: Video },
+{ value: "92%", label: "Pass Rate", icon: Brain },
+{ value: "4.8★", label: "Student Rating", icon: Star }];
+
 
 const testimonials = [
-  {
-    name: "Aminu Ibrahim",
-    role: "SS3 Student, Kano",
-    quote: "Hausa Math helped me understand Mathematics easily. I got an A1 in WAEC!",
-  },
-  {
-    name: "Fatima Yusuf",
-    role: "SS2 Student, Kaduna",
-    quote: "I learn math on my phone anywhere. The lessons are great and easy to follow.",
-  },
-  {
-    name: "Musa Abdullahi",
-    role: "SS1 Student, Sokoto",
-    quote: "The AI quizzes helped me a lot. Now I understand algebra and trigonometry.",
-  },
-];
+{
+  name: "Aminu Ibrahim",
+  role: "SS3 Student, Kano",
+  quote: "Hausa Math helped me understand Mathematics easily. I got an A1 in WAEC!"
+},
+{
+  name: "Fatima Yusuf",
+  role: "SS2 Student, Kaduna",
+  quote: "I learn math on my phone anywhere. The lessons are great and easy to follow."
+},
+{
+  name: "Musa Abdullahi",
+  role: "SS1 Student, Sokoto",
+  quote: "The AI quizzes helped me a lot. Now I understand algebra and trigonometry."
+}];
+
 
 const partners = [
-  "WAEC", "NECO", "Ministry of Education", "UNICEF", "UNESCO",
-];
+"WAEC", "NECO", "Ministry of Education", "UNICEF", "UNESCO"];
+
 
 export default function Index() {
   const { user } = useAuth();
@@ -65,7 +65,7 @@ export default function Index() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground leading-tight">
             Learn Math <span className="text-primary">in Hausa</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8">Watch. Practice. Master. Prepare for WAEC & NECO with video lessons entirely in Hausa.</p>
+          <p className="text-lg md:text-xl text-muted-foreground mb-8">Prepare for WAEC & NECO with Math video lessons taught in Hausa.</p>
           <Link to={user ? "/classes" : "/login"}>
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 h-14">
               <Play className="w-5 h-5 mr-2" />
@@ -75,32 +75,32 @@ export default function Index() {
         </motion.div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
-          {heroImages.map((img, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
-              className="rounded-xl overflow-hidden shadow-lg border-2 border-primary/10 aspect-square"
-            >
+          {heroImages.map((img, i) =>
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
+            className="rounded-xl overflow-hidden shadow-lg border-2 border-primary/10 aspect-square">
+            
               <img src={img} alt={`Hausa students learning mathematics ${i + 1}`} className="w-full h-full object-cover" />
             </motion.div>
-          ))}
+          )}
         </div>
       </section>
 
       {/* Statistics */}
       <section className="container pb-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+          {stats.map((stat, i) =>
+          <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
               <Card className="text-center p-6">
                 <stat.icon className="w-8 h-8 mx-auto mb-2 text-primary" />
                 <div className="text-2xl font-bold text-foreground">{stat.value}</div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
               </Card>
             </motion.div>
-          ))}
+          )}
         </div>
       </section>
 
@@ -112,18 +112,18 @@ export default function Index() {
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { icon: Video, title: "Watch", desc: "Video lessons taught entirely in Hausa by expert teachers" },
-            { icon: Brain, title: "Practice", desc: "AI-generated quizzes with step-by-step solutions in Hausa" },
-            { icon: GraduationCap, title: "Master", desc: "Track your progress and prepare for WAEC & NECO exams" },
-          ].map((step, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }}>
+          { icon: Video, title: "Watch", desc: "Video lessons taught entirely in Hausa by expert teachers" },
+          { icon: Brain, title: "Practice", desc: "AI-generated quizzes with step-by-step solutions in Hausa" },
+          { icon: GraduationCap, title: "Master", desc: "Track your progress and prepare for WAEC & NECO exams" }].
+          map((step, i) =>
+          <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }}>
               <Card className="text-center p-8">
                 <step.icon className="w-10 h-10 mx-auto mb-4 text-accent" />
                 <h3 className="text-xl font-bold mb-2">{step.title}</h3>
                 <p className="text-muted-foreground text-sm">{step.desc}</p>
               </Card>
             </motion.div>
-          ))}
+          )}
         </div>
       </section>
 
@@ -131,8 +131,8 @@ export default function Index() {
       <section className="container pb-16">
         <h2 className="text-3xl font-bold text-center mb-8">Classes</h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {classLevels.map((cls, i) => (
-            <Link key={cls.id} to={`/classes/${cls.id}`} onClick={(e) => handleClassClick(cls.id, e)}>
+          {classLevels.map((cls, i) =>
+          <Link key={cls.id} to={`/classes/${cls.id}`} onClick={(e) => handleClassClick(cls.id, e)}>
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                 <Card className="hover:shadow-lg transition-shadow p-6 text-center">
                   <BookOpen className="w-10 h-10 mx-auto mb-4 text-primary" />
@@ -142,7 +142,7 @@ export default function Index() {
                 </Card>
               </motion.div>
             </Link>
-          ))}
+          )}
         </div>
       </section>
 
@@ -153,8 +153,8 @@ export default function Index() {
           <p className="text-muted-foreground">Hear from students already using Hausa Math</p>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+          {testimonials.map((t, i) =>
+          <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
               <Card className="p-6">
                 <CardContent className="p-0 space-y-4">
                   <p className="italic text-muted-foreground">"{t.quote}"</p>
@@ -165,7 +165,7 @@ export default function Index() {
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
+          )}
         </div>
       </section>
 
@@ -173,9 +173,9 @@ export default function Index() {
       <section className="container pb-16 text-center">
         <p className="text-sm text-muted-foreground mb-4">Aligned with</p>
         <div className="flex flex-wrap justify-center gap-4">
-          {partners.map((p) => (
-            <span key={p} className="px-4 py-2 bg-secondary rounded-full text-sm font-medium text-secondary-foreground">{p}</span>
-          ))}
+          {partners.map((p) =>
+          <span key={p} className="px-4 py-2 bg-secondary rounded-full text-sm font-medium text-secondary-foreground">{p}</span>
+          )}
         </div>
       </section>
 
@@ -191,6 +191,6 @@ export default function Index() {
           </Link>
         </Card>
       </section>
-    </div>
-  );
+    </div>);
+
 }
