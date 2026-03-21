@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,16 +6,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
 import QuizCard from "@/components/QuizCard";
-import { getTopicById } from "@/lib/data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useTopicById } from "@/hooks/useTopics";
 import type { QuizQuestion } from "@/lib/data";
 
 export default function Lesson() {
   const { topicId } = useParams();
   const navigate = useNavigate();
-  const topic = getTopicById(topicId || "");
+  const { topic, loading: topicLoading } = useTopicById(topicId || "");
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
@@ -24,6 +24,14 @@ export default function Lesson() {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  if (topicLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!topic) {
     return (
@@ -40,7 +48,6 @@ export default function Lesson() {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      // Try to get existing questions from DB
       const { data, error } = await supabase
         .from("quiz_questions")
         .select("*")
@@ -49,29 +56,24 @@ export default function Lesson() {
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        // Generate questions via edge function
         const { data: genData, error: genError } = await supabase.functions.invoke("generate-quiz", {
-          body: { topicId: topic.id, topicTitle: topic.title, classLevel: topic.classLevel },
+          body: { topicId: topic.id, topicTitle: topic.title, classLevel: topic.class_level },
         });
 
         if (genError) throw genError;
-
         if (genData?.error) {
           toast({ title: "Error generating quiz", description: genData.error, variant: "destructive" });
           setLoading(false);
           return;
         }
 
-        // Fetch the newly generated questions
         const { data: newData, error: newError } = await supabase
           .from("quiz_questions")
           .select("*")
           .eq("topic_id", topic.id);
 
         if (newError) throw newError;
-        if (newData) {
-          pickRandomQuestions(newData);
-        }
+        if (newData) pickRandomQuestions(newData);
       } else {
         pickRandomQuestions(data);
       }
@@ -84,11 +86,9 @@ export default function Lesson() {
   };
 
   const pickRandomQuestions = (allQuestions: any[]) => {
-    // Shuffle and pick 5, trying to get mixed difficulty
     const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 5);
-
-    const mapped: QuizQuestion[] = selected.map((q, i) => ({
+    const mapped: QuizQuestion[] = selected.map((q) => ({
       id: q.id,
       question: q.question,
       options: q.options as { label: string; value: string }[],
@@ -96,7 +96,6 @@ export default function Lesson() {
       stepByStep: q.step_by_step as string[],
       explanation: q.explanation,
     }));
-
     setQuestions(mapped);
   };
 
@@ -112,7 +111,7 @@ export default function Lesson() {
   const handleNext = async () => {
     if (currentQ + 1 >= questions.length) {
       setFinished(true);
-      if (user && topic && supabase) {
+      if (user && supabase) {
         const { error } = await supabase.from("scores").insert({
           user_id: user.id,
           topic_id: topic.id,
@@ -132,16 +131,16 @@ export default function Lesson() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container py-8 max-w-3xl">
-        <Link to={`/classes/${topic.classLevel}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
-          <ArrowLeft className="w-4 h-4" /> Back to {topic.classLevel}
+        <Link to={`/classes/${topic.class_level}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+          <ArrowLeft className="w-4 h-4" /> Back to {topic.class_level}
         </Link>
 
         <div className="mb-2">
-          <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded">{topic.classLevel}</span>
+          <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded">{topic.class_level}</span>
         </div>
         <h1 className="text-2xl font-bold mb-4">{topic.title}</h1>
 
-        <VideoPlayer url={topic.videoUrl} title={topic.title} />
+        <VideoPlayer url={topic.video_url} title={topic.title} />
 
         {!quizStarted ? (
           <Card className="mt-6">
