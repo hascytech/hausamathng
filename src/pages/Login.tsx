@@ -27,7 +27,7 @@ export default function Login() {
 
   useEffect(() => {
     if (user) navigate("/classes");
-  }, [user, navigate]);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
