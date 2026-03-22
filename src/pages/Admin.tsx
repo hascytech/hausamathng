@@ -302,6 +302,19 @@ export default function Admin() {
                               <span className="text-xs text-muted-foreground ml-2 truncate max-w-[200px] inline-block align-middle">{topic.video_url}</span>
                             </div>
                             <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Regenerate Quiz"
+                                disabled={generatingQuiz === topic.id}
+                                onClick={() => handleGenerateQuiz(topic, true)}
+                              >
+                                {generatingQuiz === topic.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-4 h-4" />
+                                )}
+                              </Button>
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button variant="ghost" size="icon" onClick={() => setEditingTopic({ ...topic })}>
