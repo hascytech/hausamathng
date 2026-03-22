@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { topicId, topicTitle, classLevel } = await req.json();
+    const { topicId, topicTitle, topicDescription, classLevel, regenerate } = await req.json();
 
     if (!topicId || !topicTitle) {
       return new Response(JSON.stringify({ error: "topicId and topicTitle are required" }), {
@@ -29,25 +29,38 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if questions already exist for this topic
-    const { data: existing, error: checkError } = await supabase
-      .from("quiz_questions")
-      .select("id")
-      .eq("topic_id", topicId)
-      .limit(1);
+    // If regenerate, delete existing questions first
+    if (regenerate) {
+      const { error: delError } = await supabase
+        .from("quiz_questions")
+        .delete()
+        .eq("topic_id", topicId);
+      if (delError) throw delError;
+    } else {
+      // Check if questions already exist
+      const { data: existing, error: checkError } = await supabase
+        .from("quiz_questions")
+        .select("id")
+        .eq("topic_id", topicId)
+        .limit(1);
 
-    if (checkError) throw checkError;
+      if (checkError) throw checkError;
 
-    if (existing && existing.length > 0) {
-      return new Response(JSON.stringify({ message: "Questions already exist", generated: false }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (existing && existing.length > 0) {
+        return new Response(JSON.stringify({ message: "Questions already exist", generated: false }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    // Generate questions using Lovable AI
-    const prompt = `Quiz me on ${topicTitle} for ${classLevel || "Senior Secondary"} level mathematics.
+    // Build scope guidance from the topic description
+    const scopeGuidance = topicDescription
+      ? `\n\nIMPORTANT SCOPE: The topic description is "${topicDescription}". Use this as guidance for what aspects to cover. Only ask questions about concepts mentioned or closely related to this description. Do NOT ask questions about aspects of "${topicTitle}" that are outside the scope described.`
+      : "";
 
-Generate exactly 25 multiple-choice questions with mixed difficulty (about 8 easy, 9 medium, 8 hard).
+    const prompt = `Quiz me on ${topicTitle} for ${classLevel || "Senior Secondary"} level mathematics.${scopeGuidance}
+
+Generate exactly 30 multiple-choice questions with mixed difficulty (about 10 easy, 10 medium, 10 hard).
 
 Return a JSON array of objects with this exact structure:
 [
@@ -113,7 +126,6 @@ IMPORTANT:
 
     if (!content) throw new Error("No content from AI");
 
-    // Parse JSON from response (handle potential markdown fences)
     let questions;
     try {
       const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
@@ -127,7 +139,6 @@ IMPORTANT:
       throw new Error("AI did not return a valid array of questions");
     }
 
-    // Insert questions into database
     const rows = questions.map((q: any) => ({
       topic_id: topicId,
       question: q.question,

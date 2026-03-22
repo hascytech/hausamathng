@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Users, FileQuestion, BarChart3, BookOpen, Plus, Pencil, Trash2,
-  Shield, Save, X, Loader2, UserPlus, Eye
+  Shield, Save, X, Loader2, UserPlus, Eye, RefreshCw
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,34 @@ export default function Admin() {
     setScoresLoading(false);
   };
 
+  const [generatingQuiz, setGeneratingQuiz] = useState<string | null>(null);
+
+  // Generate quiz for a topic
+  const handleGenerateQuiz = async (topic: DbTopic, regenerate = false) => {
+    setGeneratingQuiz(topic.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-quiz", {
+        body: {
+          topicId: topic.id,
+          topicTitle: topic.title,
+          topicDescription: topic.description,
+          classLevel: topic.class_level,
+          regenerate,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast({ title: "Quiz generation failed", description: data.error, variant: "destructive" });
+      } else {
+        toast({ title: regenerate ? "Quiz regenerated" : "Quiz generated", description: `${data?.count || 30} questions created` });
+      }
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setGeneratingQuiz(null);
+    }
+  };
+
   // Topic CRUD — database
   const handleSaveNewTopic = async () => {
     if (!newTopic.title) return;
@@ -107,10 +135,12 @@ export default function Admin() {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Topic added" });
+      toast({ title: "Topic added — generating quiz..." });
       setNewTopic({ title: "", description: "", video_url: "", class_level: "SS1" });
       setAddOpen(false);
-      refetchTopics();
+      await refetchTopics();
+      // Auto-generate quiz for new topic
+      handleGenerateQuiz({ id, title: newTopic.title, description: newTopic.description, class_level: newTopic.class_level, video_url: newTopic.video_url, order: existing.length + 1 });
     }
   };
 
@@ -272,6 +302,19 @@ export default function Admin() {
                               <span className="text-xs text-muted-foreground ml-2 truncate max-w-[200px] inline-block align-middle">{topic.video_url}</span>
                             </div>
                             <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Regenerate Quiz"
+                                disabled={generatingQuiz === topic.id}
+                                onClick={() => handleGenerateQuiz(topic, true)}
+                              >
+                                {generatingQuiz === topic.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-4 h-4" />
+                                )}
+                              </Button>
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button variant="ghost" size="icon" onClick={() => setEditingTopic({ ...topic })}>

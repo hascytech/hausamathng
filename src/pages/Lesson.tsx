@@ -57,7 +57,7 @@ export default function Lesson() {
 
       if (!data || data.length === 0) {
         const { data: genData, error: genError } = await supabase.functions.invoke("generate-quiz", {
-          body: { topicId: topic.id, topicTitle: topic.title, classLevel: topic.class_level },
+          body: { topicId: topic.id, topicTitle: topic.title, topicDescription: topic.description, classLevel: topic.class_level },
         });
 
         if (genError) throw genError;
