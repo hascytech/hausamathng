@@ -48,6 +48,7 @@ export default function Login() {
           title: "Account created!",
           description: "Please check your email to verify your account.",
         });
+        navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,

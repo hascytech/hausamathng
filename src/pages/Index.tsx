@@ -169,7 +169,7 @@ export default function Index() {
         <Card className="bg-primary text-primary-foreground p-10">
           <h2 className="text-3xl font-bold mb-4">Ready to Master Mathematics?</h2>
           <p className="mb-6 opacity-90">Join hundreds of Hausa-speaking students already learning math the easy way.</p>
-          <Link to={user ? "/classes" : "/login?mode=signup"}>
+          <Link to="/classes">
             <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8">
               Start Now — It's Free
             </Button>
