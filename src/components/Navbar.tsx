@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, BookOpen, Trophy, Info, LogIn, LogOut, Menu, X, Shield } from "lucide-react";
+import { Home, BookOpen, Trophy, Info, LogIn, LogOut, Menu, X, Shield, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,7 +7,6 @@ import { useAdmin } from "@/hooks/useAdmin";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/classes", label: "Classes", icon: BookOpen },
   { to: "/about", label: "About", icon: Info },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
@@ -53,6 +52,19 @@ export default function Navbar() {
               >
                 <Shield className="w-4 h-4" />
                 Admin
+              </Link>
+            )}
+            {user && (
+              <Link
+                to="/dashboard"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === "/dashboard"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
               </Link>
             )}
             {user ? (
@@ -111,6 +123,18 @@ export default function Navbar() {
               >
                 <Shield className="w-4 h-4" />
                 Admin
+              </Link>
+            )}
+            {user && (
+              <Link
+                to="/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === "/dashboard" ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
               </Link>
             )}
             {user ? (

@@ -27,7 +27,7 @@ export default function Login() {
 
   useEffect(() => {
     if (user) navigate("/classes");
-  }, [user, navigate]);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +48,7 @@ export default function Login() {
           title: "Account created!",
           description: "Please check your email to verify your account.",
         });
+        navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
