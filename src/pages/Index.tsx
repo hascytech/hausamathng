@@ -61,7 +61,7 @@ export default function Index() {
             Learn Math <span className="text-primary">in Hausa</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-8">Prepare for WAEC & NECO with Math video lessons taught in Hausa.</p>
-          <Link to={user ? "/classes" : "/login"}>
+          <Link to="/classes">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 h-14">
               <Play className="w-5 h-5 mr-2" />
               Start Learning
