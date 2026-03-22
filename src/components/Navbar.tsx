@@ -54,6 +54,19 @@ export default function Navbar() {
                 Admin
               </Link>
             )}
+            {user && (
+              <Link
+                to="/dashboard"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === "/dashboard"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Link>
+            )}
             {user ? (
               <Button variant="ghost" size="sm" onClick={signOut}>
                 <LogOut className="w-4 h-4 mr-1" />
