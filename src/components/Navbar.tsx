@@ -125,6 +125,18 @@ export default function Navbar() {
                 Admin
               </Link>
             )}
+            {user && (
+              <Link
+                to="/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === "/dashboard" ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Link>
+            )}
             {user ? (
               <button
                 onClick={() => { signOut(); setMobileOpen(false); }}
