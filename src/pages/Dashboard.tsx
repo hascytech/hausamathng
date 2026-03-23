@@ -55,7 +55,7 @@ export default function Dashboard() {
       const totalQuestions = allScores.reduce((sum, s) => sum + s.total_questions, 0);
       const totalCorrect = allScores.reduce((sum, s) => sum + s.score, 0);
       const accuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-      const points = totalCorrect * 10;
+      const points = totalCorrect;
       const topicsAttempted = new Set(allScores.map((s) => s.topic_id)).size;
 
       // Fetch leaderboard position

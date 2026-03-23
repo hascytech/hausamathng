@@ -20,8 +20,7 @@ export default function Leaderboard() {
     const fetchLeaderboard = async () => {
       const { data: rows } = await supabase
         .from("leaderboard")
-        .select("*")
-        .limit(20);
+        .select("*");
 
       if (rows) {
         setData(

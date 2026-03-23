@@ -77,7 +77,7 @@ function ClassDetail({ classId }: { classId: string }) {
           <div className="grid gap-4">
             {topics.map((topic, i) => (
               <motion.div key={topic.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-                <Link to={`/lesson/${topic.id}`}>
+                <Link to={`/lesson/${topic.id}`} onClick={(e) => handleTopicClick(e, topic.id)}>
                   <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6 flex items-center justify-between">
                       <div>
