@@ -1,7 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, Play, Users, Video, Brain, Star, GraduationCap } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
@@ -40,15 +39,6 @@ const testimonials = [
 ];
 
 export default function Index() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const handleClassClick = (classId: string, e: React.MouseEvent) => {
-    if (!user) {
-      e.preventDefault();
-      navigate("/login");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -112,7 +102,7 @@ export default function Index() {
         <h2 className="text-3xl font-bold text-center mb-8">Classes</h2>
         <div className="grid md:grid-cols-3 gap-6">
           {classLevels.map((cls, i) => (
-            <Link key={cls.id} to={`/classes/${cls.id}`} onClick={(e) => handleClassClick(cls.id, e)}>
+            <Link key={cls.id} to={`/classes/${cls.id}`}>
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                 <Card className="hover:shadow-lg transition-shadow p-6 text-center">
                   <BookOpen className="w-10 h-10 mx-auto mb-4 text-primary" />
