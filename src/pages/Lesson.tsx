@@ -22,8 +22,35 @@ export default function Lesson() {
   const [finished, setFinished] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast({
+        title: "Login Required",
+        description: "Access to video lessons is exclusive for logged in users",
+        variant: "destructive",
+      });
+      setTimeout(() => navigate("/login"), 1500);
+    }
+  }, [authLoading, user, navigate, toast]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (topicLoading) {
     return (
