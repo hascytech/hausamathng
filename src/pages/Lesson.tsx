@@ -178,7 +178,7 @@ export default function Lesson() {
               <h2 className="text-2xl font-bold">Well done!</h2>
               <p className="text-muted-foreground">You've completed the quiz for {topic.title}</p>
               <div className="text-3xl font-bold text-primary">
-                {score} / {questions.length * 10} points
+                {score} / {questions.length} correct
               </div>
               <div className="flex gap-3 justify-center">
                 <Button onClick={() => {
