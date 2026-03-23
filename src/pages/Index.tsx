@@ -43,12 +43,7 @@ export default function Index() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleClassClick = (classId: string, e: React.MouseEvent) => {
-    if (!user) {
-      e.preventDefault();
-      navigate("/login");
-    }
-  };
+  // No auth check needed - classes are publicly accessible
 
   return (
     <div className="min-h-screen bg-background">
