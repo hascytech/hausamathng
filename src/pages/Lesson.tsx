@@ -105,7 +105,7 @@ export default function Lesson() {
   };
 
   const handleAnswer = (isCorrect: boolean) => {
-    if (isCorrect) setScore((s) => s + 10);
+    if (isCorrect) setScore((s) => s + 1);
   };
 
   const handleNext = async () => {
@@ -116,7 +116,7 @@ export default function Lesson() {
           user_id: user.id,
           topic_id: topic.id,
           score: score,
-          total_questions: questions.length * 10,
+          total_questions: questions.length,
         });
         if (error) {
           toast({ title: "Error saving score", description: error.message, variant: "destructive" });
@@ -178,7 +178,7 @@ export default function Lesson() {
               <h2 className="text-2xl font-bold">Well done!</h2>
               <p className="text-muted-foreground">You've completed the quiz for {topic.title}</p>
               <div className="text-3xl font-bold text-primary">
-                {score} / {questions.length * 10} points
+                {score} / {questions.length} correct
               </div>
               <div className="flex gap-3 justify-center">
                 <Button onClick={() => {

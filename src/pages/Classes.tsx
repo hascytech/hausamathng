@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, Play, ArrowLeft, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { classLevels } from "@/lib/data";
 import { useTopics } from "@/hooks/useTopics";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Classes() {
   const { classId } = useParams();
@@ -43,6 +45,21 @@ export default function Classes() {
 function ClassDetail({ classId }: { classId: string }) {
   const cls = classLevels.find((c) => c.id === classId);
   const { topics, loading } = useTopics(classId);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleTopicClick = (e: React.MouseEvent, topicId: string) => {
+    if (!user) {
+      e.preventDefault();
+      toast({
+        title: "Login Required",
+        description: "Access to video lessons is exclusive for logged in users. Please log in or sign up to continue.",
+        variant: "destructive",
+      });
+      setTimeout(() => navigate("/login"), 2000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,7 +77,7 @@ function ClassDetail({ classId }: { classId: string }) {
           <div className="grid gap-4">
             {topics.map((topic, i) => (
               <motion.div key={topic.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-                <Link to={`/lesson/${topic.id}`}>
+                <Link to={`/lesson/${topic.id}`} onClick={(e) => handleTopicClick(e, topic.id)}>
                   <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6 flex items-center justify-between">
                       <div>
