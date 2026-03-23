@@ -39,10 +39,6 @@ const testimonials = [
 ];
 
 export default function Index() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  // No auth check needed - classes are publicly accessible
 
   return (
     <div className="min-h-screen bg-background">
