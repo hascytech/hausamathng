@@ -45,6 +45,21 @@ export default function Classes() {
 function ClassDetail({ classId }: { classId: string }) {
   const cls = classLevels.find((c) => c.id === classId);
   const { topics, loading } = useTopics(classId);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleTopicClick = (e: React.MouseEvent, topicId: string) => {
+    if (!user) {
+      e.preventDefault();
+      toast({
+        title: "Login Required",
+        description: "Access to video lessons is exclusive for logged in users. Please log in or sign up to continue.",
+        variant: "destructive",
+      });
+      setTimeout(() => navigate("/login"), 2000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
