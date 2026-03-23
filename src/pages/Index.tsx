@@ -93,7 +93,7 @@ export default function Index() {
         <div className="grid md:grid-cols-3 gap-6">
           {[
             { icon: Video, title: "Watch", desc: "Video lessons taught entirely in Hausa by expert teachers" },
-            { icon: Brain, title: "Practice", desc: "AI-generated quizzes with step-by-step solutions in Hausa" },
+            { icon: Brain, title: "Practice", desc: "AI-generated quizzes with step-by-step solutions" },
             { icon: GraduationCap, title: "Master", desc: "Track your progress and prepare for WAEC & NECO exams" },
           ].map((step, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }}>
