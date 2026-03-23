@@ -128,7 +128,10 @@ IMPORTANT:
 
     let questions;
     try {
-      const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      let cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      // Fix malformed JSON: duplicate "label" keys where "value" was intended
+      // Pattern: {"label": "X", "label": "some text"} -> {"label": "X", "value": "some text"}
+      cleaned = cleaned.replace(/"label":\s*"([A-D])"\s*,\s*"label":\s*"/g, '"label": "$1", "value": "');
       questions = JSON.parse(cleaned);
     } catch (e) {
       console.error("Failed to parse AI response:", content);
