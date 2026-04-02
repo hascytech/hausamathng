@@ -189,7 +189,8 @@ export default function Login() {
                     </form>
                   </div>
                 </div>
-              )
+              )}
+
             </CardContent>
           </Card>
         </motion.div>
