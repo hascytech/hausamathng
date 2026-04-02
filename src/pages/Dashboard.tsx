@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Target, CheckCircle2, Percent, Star, BookCheck, Trophy, Loader2, Lock, Settings } from "lucide-react";
+import { Target, CheckCircle2, Percent, Star, BookCheck, Trophy, Loader2, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
