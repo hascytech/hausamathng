@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Target, CheckCircle2, Percent, Star, BookCheck, Trophy, Loader2, Lock, Settings } from "lucide-react";
+import { Target, CheckCircle2, Percent, Star, BookCheck, Trophy, Loader2, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,9 +34,6 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentScore[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -150,6 +147,26 @@ export default function Dashboard() {
           ))}
         </div>
 
+        {/* Reset Password link */}
+        <div className="mb-8">
+          <button
+            onClick={async () => {
+              try {
+                const { error } = await supabase.auth.resetPasswordForEmail(user!.email!, {
+                  redirectTo: `${window.location.origin}/reset-password`,
+                });
+                if (error) throw error;
+                toast({ title: "Email Sent", description: "Check your inbox for a password reset link." });
+              } catch (err: any) {
+                toast({ title: "Error", description: err.message, variant: "destructive" });
+              }
+            }}
+            className="text-sm text-primary hover:underline flex items-center gap-1"
+          >
+            <Lock className="w-4 h-4" /> Reset Password
+          </button>
+        </div>
+
         {/* Recent activity */}
         <Card>
           <CardContent className="p-6">
@@ -176,69 +193,6 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-        {/* Settings */}
-        <Card className="mt-6">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <Settings className="w-5 h-5" /> Account Settings
-            </h2>
-            <div className="max-w-sm space-y-3">
-              <div>
-                <label className="text-sm font-medium mb-1 flex items-center gap-1">
-                  <Lock className="w-4 h-4" /> New Password
-                </label>
-                <Input
-                  type="password"
-                  placeholder="••••••"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  minLength={6}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 flex items-center gap-1">
-                  <Lock className="w-4 h-4" /> Confirm Password
-                </label>
-                <Input
-                  type="password"
-                  placeholder="••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  minLength={6}
-                />
-              </div>
-              <Button
-                disabled={passwordLoading || !newPassword}
-                className="bg-primary text-primary-foreground"
-                onClick={async () => {
-                  if (newPassword !== confirmPassword) {
-                    toast({ title: "Error", description: "Passwords do not match.", variant: "destructive" });
-                    return;
-                  }
-                  if (newPassword.length < 6) {
-                    toast({ title: "Error", description: "Password must be at least 6 characters.", variant: "destructive" });
-                    return;
-                  }
-                  setPasswordLoading(true);
-                  try {
-                    const { error } = await supabase.auth.updateUser({ password: newPassword });
-                    if (error) throw error;
-                    toast({ title: "Success", description: "Password updated successfully." });
-                    setNewPassword("");
-                    setConfirmPassword("");
-                  } catch (err: any) {
-                    toast({ title: "Error", description: err.message, variant: "destructive" });
-                  } finally {
-                    setPasswordLoading(false);
-                  }
-                }}
-              >
-                {passwordLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Change Password
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
