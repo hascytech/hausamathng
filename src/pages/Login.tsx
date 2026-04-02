@@ -127,6 +127,18 @@ export default function Login() {
                 </Button>
               </form>
 
+              {!isSignup && (
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgot(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+
               <p className="text-center text-sm mt-4 text-muted-foreground">
                 {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
                 <button
@@ -136,6 +148,48 @@ export default function Login() {
                   {isSignup ? "Login" : "Create Account"}
                 </button>
               </p>
+
+              {/* Forgot Password Dialog */}
+              {showForgot && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowForgot(false)}>
+                  <div className="bg-background rounded-lg p-6 w-full max-w-sm mx-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                    <h3 className="text-lg font-bold mb-2">Reset Password</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Enter your email and we'll send you a link to reset your password.</p>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        setForgotLoading(true);
+                        try {
+                          const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+                            redirectTo: `${window.location.origin}/reset-password`,
+                          });
+                          if (error) throw error;
+                          toast({ title: "Email Sent", description: "Check your inbox for a password reset link." });
+                          setShowForgot(false);
+                          setForgotEmail("");
+                        } catch (err: any) {
+                          toast({ title: "Error", description: err.message, variant: "destructive" });
+                        } finally {
+                          setForgotLoading(false);
+                        }
+                      }}
+                      className="space-y-3"
+                    >
+                      <Input
+                        type="email"
+                        placeholder="email@example.com"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        required
+                      />
+                      <Button type="submit" disabled={forgotLoading} className="w-full bg-primary text-primary-foreground">
+                        {forgotLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Send Reset Link
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              )
             </CardContent>
           </Card>
         </motion.div>
