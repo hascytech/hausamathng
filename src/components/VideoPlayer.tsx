@@ -16,10 +16,10 @@ function getEmbedUrl(url: string): { embedUrl: string; isVertical: boolean } {
 }
 
 export default function VideoPlayer({ url, title }: VideoPlayerProps) {
-  const embedUrl = getEmbedUrl(url);
+  const { embedUrl, isVertical } = getEmbedUrl(url);
 
   return (
-    <div className="w-full aspect-video rounded-lg overflow-hidden border border-border bg-card">
+    <div className={`w-full rounded-lg overflow-hidden border border-border bg-card ${isVertical ? 'max-w-sm mx-auto aspect-[9/16]' : 'aspect-video'}`}>
       <iframe
         src={embedUrl}
         title={title}
