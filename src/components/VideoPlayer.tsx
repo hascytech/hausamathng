@@ -3,16 +3,16 @@ interface VideoPlayerProps {
   title: string;
 }
 
-function getEmbedUrl(url: string): string {
+function getEmbedUrl(url: string): { embedUrl: string; isVertical: boolean } {
   // YouTube
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  if (ytMatch) return { embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}`, isVertical: false };
 
   // TikTok
   const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
-  if (ttMatch) return `https://www.tiktok.com/embed/v2/${ttMatch[1]}`;
+  if (ttMatch) return { embedUrl: `https://www.tiktok.com/embed/v2/${ttMatch[1]}`, isVertical: true };
 
-  return url;
+  return { embedUrl: url, isVertical: false };
 }
 
 export default function VideoPlayer({ url, title }: VideoPlayerProps) {
