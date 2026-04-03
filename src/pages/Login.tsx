@@ -127,15 +127,17 @@ export default function Login() {
                 </Button>
               </form>
 
-              <div className="text-center mt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowForgot(true)}
-                  className="text-sm text-primary hover:underline"
-                >
-                  Forgot Password?
-                </button>
-              </div>
+              {!isSignup && (
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgot(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
 
               <p className="text-center text-sm mt-4 text-muted-foreground">
                 {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
