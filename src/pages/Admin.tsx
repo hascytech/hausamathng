@@ -90,6 +90,7 @@ export default function Admin() {
   };
 
   const [generatingQuiz, setGeneratingQuiz] = useState<string | null>(null);
+  const [regeneratingAll, setRegeneratingAll] = useState(false);
 
   // Generate quiz for a topic
   const handleGenerateQuiz = async (topic: DbTopic, regenerate = false) => {
@@ -115,6 +116,44 @@ export default function Admin() {
     } finally {
       setGeneratingQuiz(null);
     }
+  };
+
+  // Regenerate quizzes for ALL topics (sequential to avoid rate limits)
+  const handleRegenerateAll = async () => {
+    if (!confirm(`Regenerate quizzes for ALL ${dbTopics.length} topics? This will replace every existing question and uses AI credits.`)) return;
+    setRegeneratingAll(true);
+    let ok = 0;
+    let failed = 0;
+    for (const topic of dbTopics) {
+      setGeneratingQuiz(topic.id);
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-quiz", {
+          body: {
+            topicId: topic.id,
+            topicTitle: topic.title,
+            topicDescription: topic.description,
+            classLevel: topic.class_level,
+            regenerate: true,
+          },
+        });
+        if (error || data?.error) {
+          failed++;
+          console.error("Regen failed for", topic.id, error || data?.error);
+        } else {
+          ok++;
+        }
+      } catch (e) {
+        failed++;
+        console.error("Regen exception for", topic.id, e);
+      }
+    }
+    setGeneratingQuiz(null);
+    setRegeneratingAll(false);
+    toast({
+      title: "Regeneration complete",
+      description: `${ok} succeeded, ${failed} failed (out of ${dbTopics.length} topics).`,
+      variant: failed > 0 ? "destructive" : "default",
+    });
   };
 
   // Topic CRUD — database
