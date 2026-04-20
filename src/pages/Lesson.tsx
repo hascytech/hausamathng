@@ -230,6 +230,7 @@ export default function Lesson() {
               totalQuestions={questions.length}
               onAnswer={handleAnswer}
               onNext={handleNext}
+              isLast={currentQ + 1 >= questions.length}
             />
           </div>
         ) : (
