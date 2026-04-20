@@ -12,9 +12,10 @@ interface QuizCardProps {
   totalQuestions: number;
   onAnswer: (isCorrect: boolean) => void;
   onNext: () => void;
+  isLast?: boolean;
 }
 
-export default function QuizCard({ question, questionNumber, totalQuestions, onAnswer, onNext }: QuizCardProps) {
+export default function QuizCard({ question, questionNumber, totalQuestions, onAnswer, onNext, isLast }: QuizCardProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -37,7 +38,7 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
       <CardContent className="p-6 space-y-6">
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span>Question {questionNumber} / {totalQuestions}</span>
-          <span className="text-accent font-semibold">10 points</span>
+          <span className="text-accent font-semibold">1 point</span>
         </div>
 
         <h3 className="text-lg font-semibold leading-relaxed">
@@ -90,7 +91,7 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
                   <XCircle className="w-5 h-5" />
                 )}
                 <span className="font-semibold">
-                  {isCorrect ? "Correct! +10 points" : "Incorrect. Try again!"}
+                  {isCorrect ? "Correct! +1 point" : "Incorrect. Try again!"}
                 </span>
               </div>
 
@@ -106,7 +107,7 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
               </div>
 
               <Button onClick={handleNext} className="w-full bg-accent text-accent-foreground">
-                Next Question <ArrowRight className="w-4 h-4 ml-1" />
+                {isLast ? "Finish Quiz" : <>Next Question <ArrowRight className="w-4 h-4 ml-1" /></>}
               </Button>
             </motion.div>
           </AnimatePresence>

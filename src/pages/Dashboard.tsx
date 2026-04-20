@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Target, CheckCircle2, Percent, Star, BookCheck, Trophy, Loader2, Lock } from "lucide-react";
+import { Target, CheckCircle2, Percent, Star, BookCheck, Trophy, Loader2, KeyRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import ChangePasswordDialog from "@/components/ChangePasswordDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentScore[]>([]);
   const [loading, setLoading] = useState(true);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -147,25 +148,22 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Reset Password link */}
-        <div className="mb-8">
-          <button
-            onClick={async () => {
-              try {
-                const { error } = await supabase.auth.resetPasswordForEmail(user!.email!, {
-                  redirectTo: `${window.location.origin}/reset-password`,
-                });
-                if (error) throw error;
-                toast({ title: "Email Sent", description: "Check your inbox for a password reset link." });
-              } catch (err: any) {
-                toast({ title: "Error", description: err.message, variant: "destructive" });
-              }
-            }}
-            className="text-sm text-primary hover:underline flex items-center gap-1"
+        {/* Account actions */}
+        <div className="mb-8 flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setChangePasswordOpen(true)}
+            className="gap-2"
           >
-            <Lock className="w-4 h-4" /> Reset Password
-          </button>
+            <KeyRound className="w-4 h-4" /> Change Password
+          </Button>
         </div>
+
+        <ChangePasswordDialog
+          open={changePasswordOpen}
+          onOpenChange={setChangePasswordOpen}
+          email={user?.email || ""}
+        />
 
         {/* Recent activity */}
         <Card>
