@@ -142,13 +142,74 @@ IMPORTANT:
 
     if (!content) throw new Error("No content from AI");
 
+    const extractJsonArray = (raw: string): any => {
+      let s = raw.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      // Fix duplicate "label" keys variant
+      s = s.replace(/"label":\s*"([A-D])"\s*,\s*"label":\s*"/g, '"label": "$1", "value": "');
+      // Find first '[' and matching last ']' by scanning, respecting strings
+      const start = s.indexOf("[");
+      if (start === -1) throw new Error("No JSON array found");
+      let depth = 0, inStr = false, esc = false, end = -1;
+      for (let i = start; i < s.length; i++) {
+        const c = s[i];
+        if (inStr) {
+          if (esc) esc = false;
+          else if (c === "\\") esc = true;
+          else if (c === '"') inStr = false;
+          continue;
+        }
+        if (c === '"') { inStr = true; continue; }
+        if (c === "[") depth++;
+        else if (c === "]") {
+          depth--;
+          if (depth === 0) { end = i; break; }
+        }
+      }
+      if (end === -1) {
+        // Truncated — try to repair by trimming to last complete object
+        const lastObjEnd = s.lastIndexOf("}");
+        if (lastObjEnd > start) {
+          s = s.substring(start, lastObjEnd + 1) + "]";
+        } else {
+          throw new Error("Truncated JSON, cannot repair");
+        }
+      } else {
+        s = s.substring(start, end + 1);
+      }
+      // Clean trailing commas and control chars
+      s = s.replace(/,\s*([}\]])/g, "$1").replace(/[\x00-\x09\x0B\x0C\x0E-\x1F]/g, "");
+      try {
+        return JSON.parse(s);
+      } catch (e) {
+        // Last resort: try parsing object-by-object
+        const objs: any[] = [];
+        let d = 0, is = false, es = false, objStart = -1;
+        for (let i = 0; i < s.length; i++) {
+          const c = s[i];
+          if (is) {
+            if (es) es = false;
+            else if (c === "\\") es = true;
+            else if (c === '"') is = false;
+            continue;
+          }
+          if (c === '"') { is = true; continue; }
+          if (c === "{") { if (d === 0) objStart = i; d++; }
+          else if (c === "}") {
+            d--;
+            if (d === 0 && objStart !== -1) {
+              try { objs.push(JSON.parse(s.substring(objStart, i + 1))); } catch {}
+              objStart = -1;
+            }
+          }
+        }
+        if (objs.length === 0) throw e;
+        return objs;
+      }
+    };
+
     let questions;
     try {
-      let cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      // Fix malformed JSON: duplicate "label" keys where "value" was intended
-      // Pattern: {"label": "X", "label": "some text"} -> {"label": "X", "value": "some text"}
-      cleaned = cleaned.replace(/"label":\s*"([A-D])"\s*,\s*"label":\s*"/g, '"label": "$1", "value": "');
-      questions = JSON.parse(cleaned);
+      questions = extractJsonArray(content);
     } catch (e) {
       console.error("Failed to parse AI response:", content);
       throw new Error("Failed to parse quiz questions from AI");
