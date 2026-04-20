@@ -90,7 +90,7 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
                   <XCircle className="w-5 h-5" />
                 )}
                 <span className="font-semibold">
-                  {isCorrect ? "Correct! +10 points" : "Incorrect. Try again!"}
+                  {isCorrect ? "Correct! +1 point" : "Incorrect. Try again!"}
                 </span>
               </div>
 
