@@ -12,9 +12,10 @@ interface QuizCardProps {
   totalQuestions: number;
   onAnswer: (isCorrect: boolean) => void;
   onNext: () => void;
+  isLast?: boolean;
 }
 
-export default function QuizCard({ question, questionNumber, totalQuestions, onAnswer, onNext }: QuizCardProps) {
+export default function QuizCard({ question, questionNumber, totalQuestions, onAnswer, onNext, isLast }: QuizCardProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
