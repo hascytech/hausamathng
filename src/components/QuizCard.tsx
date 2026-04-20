@@ -107,7 +107,7 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
               </div>
 
               <Button onClick={handleNext} className="w-full bg-accent text-accent-foreground">
-                Next Question <ArrowRight className="w-4 h-4 ml-1" />
+                {isLast ? "Finish Quiz" : <>Next Question <ArrowRight className="w-4 h-4 ml-1" /></>}
               </Button>
             </motion.div>
           </AnimatePresence>
