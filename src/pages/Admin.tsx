@@ -90,6 +90,7 @@ export default function Admin() {
   };
 
   const [generatingQuiz, setGeneratingQuiz] = useState<string | null>(null);
+  const [regeneratingAll, setRegeneratingAll] = useState(false);
 
   // Generate quiz for a topic
   const handleGenerateQuiz = async (topic: DbTopic, regenerate = false) => {
@@ -115,6 +116,44 @@ export default function Admin() {
     } finally {
       setGeneratingQuiz(null);
     }
+  };
+
+  // Regenerate quizzes for ALL topics (sequential to avoid rate limits)
+  const handleRegenerateAll = async () => {
+    if (!confirm(`Regenerate quizzes for ALL ${dbTopics.length} topics? This will replace every existing question and uses AI credits.`)) return;
+    setRegeneratingAll(true);
+    let ok = 0;
+    let failed = 0;
+    for (const topic of dbTopics) {
+      setGeneratingQuiz(topic.id);
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-quiz", {
+          body: {
+            topicId: topic.id,
+            topicTitle: topic.title,
+            topicDescription: topic.description,
+            classLevel: topic.class_level,
+            regenerate: true,
+          },
+        });
+        if (error || data?.error) {
+          failed++;
+          console.error("Regen failed for", topic.id, error || data?.error);
+        } else {
+          ok++;
+        }
+      } catch (e) {
+        failed++;
+        console.error("Regen exception for", topic.id, e);
+      }
+    }
+    setGeneratingQuiz(null);
+    setRegeneratingAll(false);
+    toast({
+      title: "Regeneration complete",
+      description: `${ok} succeeded, ${failed} failed (out of ${dbTopics.length} topics).`,
+      variant: failed > 0 ? "destructive" : "default",
+    });
   };
 
   // Topic CRUD — database
@@ -256,34 +295,50 @@ export default function Admin() {
           <TabsContent value="topics">
             <Card>
               <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
                   <h2 className="text-lg font-bold">Manage Topics</h2>
-                  <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Topic</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader><DialogTitle>Add New Topic</DialogTitle></DialogHeader>
-                      <div className="space-y-4">
-                        <Input placeholder="Topic title" value={newTopic.title} onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })} />
-                        <Textarea placeholder="Description" value={newTopic.description} onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })} />
-                        <Input placeholder="Video URL" value={newTopic.video_url} onChange={(e) => setNewTopic({ ...newTopic, video_url: e.target.value })} />
-                        <select
-                          className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
-                          value={newTopic.class_level}
-                          onChange={(e) => setNewTopic({ ...newTopic, class_level: e.target.value })}
-                        >
-                          <option value="SS1">SS1</option>
-                          <option value="SS2">SS2</option>
-                          <option value="SS3">SS3</option>
-                        </select>
-                        <Button onClick={handleSaveNewTopic} disabled={saving} className="w-full">
-                          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-                          Save
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRegenerateAll}
+                      disabled={regeneratingAll || dbTopics.length === 0}
+                      title="Regenerate quiz questions for every topic"
+                    >
+                      {regeneratingAll ? (
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-1" />
+                      )}
+                      Regenerate ALL
+                    </Button>
+                    <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Topic</Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader><DialogTitle>Add New Topic</DialogTitle></DialogHeader>
+                        <div className="space-y-4">
+                          <Input placeholder="Topic title" value={newTopic.title} onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })} />
+                          <Textarea placeholder="Description" value={newTopic.description} onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })} />
+                          <Input placeholder="Video URL" value={newTopic.video_url} onChange={(e) => setNewTopic({ ...newTopic, video_url: e.target.value })} />
+                          <select
+                            className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
+                            value={newTopic.class_level}
+                            onChange={(e) => setNewTopic({ ...newTopic, class_level: e.target.value })}
+                          >
+                            <option value="SS1">SS1</option>
+                            <option value="SS2">SS2</option>
+                            <option value="SS3">SS3</option>
+                          </select>
+                          <Button onClick={handleSaveNewTopic} disabled={saving} className="w-full">
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                            Save
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
 
                 {topicsLoading ? (
