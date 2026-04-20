@@ -37,7 +37,7 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
       <CardContent className="p-6 space-y-6">
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span>Question {questionNumber} / {totalQuestions}</span>
-          <span className="text-accent font-semibold">10 points</span>
+          <span className="text-accent font-semibold">1 point</span>
         </div>
 
         <h3 className="text-lg font-semibold leading-relaxed">
