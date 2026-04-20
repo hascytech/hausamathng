@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import MathText from "@/components/MathText";
 import type { QuizQuestion } from "@/lib/data";
 
 interface QuizCardProps {
@@ -39,7 +40,9 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
           <span className="text-accent font-semibold">10 points</span>
         </div>
 
-        <h3 className="text-lg font-semibold">{question.question}</h3>
+        <h3 className="text-lg font-semibold leading-relaxed">
+          <MathText>{question.question}</MathText>
+        </h3>
 
         <div className="space-y-3">
           {question.options.map((opt) => {
@@ -66,7 +69,7 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
                 <span className="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center text-sm font-bold shrink-0">
                   {opt.label}
                 </span>
-                <span>{opt.value}</span>
+                <span className="flex-1"><MathText>{opt.value}</MathText></span>
               </button>
             );
           })}
@@ -96,10 +99,10 @@ export default function QuizCard({ question, questionNumber, totalQuestions, onA
                 <h4 className="font-semibold text-sm">Step-by-step solution:</h4>
                 <ol className="space-y-1 text-sm">
                   {question.stepByStep.map((step, i) => (
-                    <li key={i}><span className="font-medium">{i + 1}.</span> {step}</li>
+                    <li key={i}><span className="font-medium">{i + 1}.</span> <MathText>{step}</MathText></li>
                   ))}
                 </ol>
-                <p className="text-sm text-muted-foreground mt-2">{question.explanation}</p>
+                <p className="text-sm text-muted-foreground mt-2"><MathText>{question.explanation}</MathText></p>
               </div>
 
               <Button onClick={handleNext} className="w-full bg-accent text-accent-foreground">

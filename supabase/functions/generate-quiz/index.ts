@@ -62,28 +62,45 @@ serve(async (req) => {
 
 Generate exactly 30 multiple-choice questions with mixed difficulty (about 10 easy, 10 medium, 10 hard).
 
-Return a JSON array of objects with this exact structure:
+CRITICAL — QUESTION INDEPENDENCE:
+Each question MUST be fully self-contained and independent. Questions are served in random order, so a question must NEVER refer to:
+- "the previous question", "the question above", "the matrix from question 2", "using the value of x found earlier", etc.
+- any data, variable, equation, matrix, or result defined in another question.
+If a question needs a matrix, equation, function, or dataset, restate it IN FULL inside that question itself.
+
+CRITICAL — LaTeX MATH FORMATTING:
+All mathematical expressions MUST be written in LaTeX and wrapped in delimiters:
+- Inline math: use single dollar signs, e.g. $x^2 + 3x - 4 = 0$, $\\sqrt{2}$, $\\frac{a}{b}$
+- Block / display math (for matrices, large fractions, integrals, square/cube roots, summations, vertical layouts): use double dollar signs, e.g. $$\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$$, $$\\sqrt[3]{27}$$, $$\\int_0^1 x^2 \\, dx$$
+- Use proper LaTeX commands: \\frac{}{}, \\sqrt{}, \\sqrt[3]{}, \\sum, \\int, \\begin{pmatrix}...\\end{pmatrix}, \\begin{bmatrix}...\\end{bmatrix}, ^{}, _{}, \\cdot, \\times, \\div, \\pi, \\theta, \\Delta, \\le, \\ge, \\ne, \\approx
+- Apply LaTeX in the question text, in EVERY option value, in step-by-step solutions, and in the explanation.
+- Do NOT use plain text like "x^2" or "sqrt(2)" or "1/2" — always wrap in $...$ or $$...$$.
+- For matrices, vertical vectors, cube roots, nth roots, and stacked fractions, prefer block math ($$...$$) so they render in normal vertical form.
+
+JSON output format (return a JSON array only):
 [
   {
-    "question": "the question text",
+    "question": "the question text with LaTeX math in $...$ or $$...$$",
     "options": [
-      {"label": "A", "value": "option text"},
-      {"label": "B", "value": "option text"},
-      {"label": "C", "value": "option text"},
-      {"label": "D", "value": "option text"}
+      {"label": "A", "value": "option text with LaTeX where needed"},
+      {"label": "B", "value": "option text with LaTeX where needed"},
+      {"label": "C", "value": "option text with LaTeX where needed"},
+      {"label": "D", "value": "option text with LaTeX where needed"}
     ],
-    "correctAnswer": "the value of the correct option (must match one of the option values exactly)",
-    "stepByStep": ["step 1", "step 2", "step 3"],
-    "explanation": "brief explanation of the solution",
+    "correctAnswer": "the value of the correct option (must match one of the option values EXACTLY, including LaTeX)",
+    "stepByStep": ["step 1 with LaTeX", "step 2 with LaTeX", "step 3 with LaTeX"],
+    "explanation": "brief explanation with LaTeX",
     "difficulty": "easy" | "medium" | "hard"
   }
 ]
 
 IMPORTANT:
-- correctAnswer must exactly match one of the option values
-- Questions should be appropriate for Nigerian Senior Secondary School level
-- Include calculations, word problems, and conceptual questions
-- Return ONLY the JSON array, no other text`;
+- correctAnswer must exactly match one of the option values (character-for-character, including LaTeX delimiters).
+- Questions should be appropriate for Nigerian Senior Secondary School level.
+- Include calculations, word problems, and conceptual questions.
+- Each question stands alone — assume the student has seen no other question.
+- Return ONLY the JSON array, no markdown fences, no other text.
+- In JSON strings, every backslash in LaTeX must be escaped as \\\\ (e.g. "$\\\\frac{1}{2}$").`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

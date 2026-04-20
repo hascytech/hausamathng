@@ -14,23 +14,61 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
+  const [verifying, setVerifying] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    }
+    let cancelled = false;
+
+    const init = async () => {
+      // 1. PKCE flow: ?code=... in the query string
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!cancelled) {
+          if (error) {
+            toast({ title: "Invalid or expired link", description: error.message, variant: "destructive" });
+          } else {
+            setIsRecovery(true);
+            // clean the URL
+            window.history.replaceState({}, "", "/reset-password");
+          }
+          setVerifying(false);
+        }
+        return;
+      }
+
+      // 2. Legacy hash flow: #access_token=...&type=recovery
+      const hash = window.location.hash;
+      if (hash && hash.includes("type=recovery")) {
+        setIsRecovery(true);
+      }
+
+      // 3. If user already has a session (e.g., link processed), allow reset
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && !cancelled) {
+        setIsRecovery(true);
+      }
+
+      if (!cancelled) setVerifying(false);
+    };
+
+    init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecovery(true);
+        setVerifying(false);
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +95,14 @@ export default function ResetPassword() {
       setLoading(false);
     }
   };
+
+  if (verifying) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!isRecovery) {
     return (
