@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Target, CheckCircle2, Percent, Star, BookCheck, Trophy, Loader2, Lock } from "lucide-react";
+import { Target, CheckCircle2, Percent, Star, BookCheck, Trophy, Loader2, KeyRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import ChangePasswordDialog from "@/components/ChangePasswordDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
