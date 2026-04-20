@@ -148,25 +148,22 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Reset Password link */}
-        <div className="mb-8">
-          <button
-            onClick={async () => {
-              try {
-                const { error } = await supabase.auth.resetPasswordForEmail(user!.email!, {
-                  redirectTo: `${window.location.origin}/reset-password`,
-                });
-                if (error) throw error;
-                toast({ title: "Email Sent", description: "Check your inbox for a password reset link." });
-              } catch (err: any) {
-                toast({ title: "Error", description: err.message, variant: "destructive" });
-              }
-            }}
-            className="text-sm text-primary hover:underline flex items-center gap-1"
+        {/* Account actions */}
+        <div className="mb-8 flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setChangePasswordOpen(true)}
+            className="gap-2"
           >
-            <Lock className="w-4 h-4" /> Reset Password
-          </button>
+            <KeyRound className="w-4 h-4" /> Change Password
+          </Button>
         </div>
+
+        <ChangePasswordDialog
+          open={changePasswordOpen}
+          onOpenChange={setChangePasswordOpen}
+          email={user?.email || ""}
+        />
 
         {/* Recent activity */}
         <Card>
