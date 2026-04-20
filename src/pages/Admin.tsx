@@ -256,34 +256,50 @@ export default function Admin() {
           <TabsContent value="topics">
             <Card>
               <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
                   <h2 className="text-lg font-bold">Manage Topics</h2>
-                  <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Topic</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader><DialogTitle>Add New Topic</DialogTitle></DialogHeader>
-                      <div className="space-y-4">
-                        <Input placeholder="Topic title" value={newTopic.title} onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })} />
-                        <Textarea placeholder="Description" value={newTopic.description} onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })} />
-                        <Input placeholder="Video URL" value={newTopic.video_url} onChange={(e) => setNewTopic({ ...newTopic, video_url: e.target.value })} />
-                        <select
-                          className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
-                          value={newTopic.class_level}
-                          onChange={(e) => setNewTopic({ ...newTopic, class_level: e.target.value })}
-                        >
-                          <option value="SS1">SS1</option>
-                          <option value="SS2">SS2</option>
-                          <option value="SS3">SS3</option>
-                        </select>
-                        <Button onClick={handleSaveNewTopic} disabled={saving} className="w-full">
-                          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-                          Save
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRegenerateAll}
+                      disabled={regeneratingAll || dbTopics.length === 0}
+                      title="Regenerate quiz questions for every topic"
+                    >
+                      {regeneratingAll ? (
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-1" />
+                      )}
+                      Regenerate ALL
+                    </Button>
+                    <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Topic</Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader><DialogTitle>Add New Topic</DialogTitle></DialogHeader>
+                        <div className="space-y-4">
+                          <Input placeholder="Topic title" value={newTopic.title} onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })} />
+                          <Textarea placeholder="Description" value={newTopic.description} onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })} />
+                          <Input placeholder="Video URL" value={newTopic.video_url} onChange={(e) => setNewTopic({ ...newTopic, video_url: e.target.value })} />
+                          <select
+                            className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
+                            value={newTopic.class_level}
+                            onChange={(e) => setNewTopic({ ...newTopic, class_level: e.target.value })}
+                          >
+                            <option value="SS1">SS1</option>
+                            <option value="SS2">SS2</option>
+                            <option value="SS3">SS3</option>
+                          </select>
+                          <Button onClick={handleSaveNewTopic} disabled={saving} className="w-full">
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                            Save
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
 
                 {topicsLoading ? (
